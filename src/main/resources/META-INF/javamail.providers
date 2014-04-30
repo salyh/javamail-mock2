@@ -1,0 +1,6 @@
+protocol=smtp; type=transport; class=de.saly.javamail.mock2.MockTransport; vendor=JavaMail Mock2 provider;
+protocol=smtps; type=transport; class=de.saly.javamail.mock2.MockTransport; vendor=JavaMail Mock2 provider;
+protocol=pop3; type=store; class=de.saly.javamail.mock2.POP3MockStore; vendor=JavaMail Mock2 provider;
+protocol=imap; type=store; class=de.saly.javamail.mock2.IMAPMockStore; vendor=JavaMail Mock2 provider;
+protocol=pop3s; type=store; class=de.saly.javamail.mock2.POP3SSLMockStore; vendor=JavaMail Mock2 provider;
+protocol=imaps; type=store; class=de.saly.javamail.mock2.IMAPSSLMockStore; vendor=JavaMail Mock2 provider;

@@ -19,9 +19,9 @@ under the License.
 -->
 <rss version="0.91">
   <channel>
-    <title>javamail-mock2 - Checkstyle report</title>
+    <title>Javamail Mock2 - Checkstyle report</title>
     <link>https://github.com/salyh/javamail-mock2</link>
-    <description>javamail-mock2 - Checkstyle report</description>
+    <description>Javamail Mock2 - Checkstyle report</description>
     <language>en-us</language>
     <copyright>&#169;2014</copyright>
     <item>

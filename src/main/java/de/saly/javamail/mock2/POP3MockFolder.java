@@ -43,7 +43,7 @@ import com.sun.mail.pop3.POP3MockFolder0;
 
 import de.saly.javamail.mock2.MailboxFolder.MailboxEventListener;
 
-public class POP3MockFolder extends POP3MockFolder0 implements MailboxEventListener  {
+public class POP3MockFolder extends POP3MockFolder0 implements MailboxEventListener {
     private final MailboxFolder mailboxFolder;
     private final UUID objectId = UUID.randomUUID();
     private volatile boolean opened;
@@ -82,6 +82,24 @@ public class POP3MockFolder extends POP3MockFolder0 implements MailboxEventListe
     @Override
     public void fetch(final Message[] msgs, final FetchProfile fp) throws MessagingException {
         // just do nothing
+    }
+
+    @Override
+    public void folderCreated(final MailboxFolder mf) {
+        // not valid for pop3
+
+    }
+
+    @Override
+    public void folderDeleted(final MailboxFolder mf) {
+        // not valid for pop3
+
+    }
+
+    @Override
+    public void folderRenamed(final String from, final MailboxFolder to) {
+        // not valid for pop3
+
     }
 
     @Override
@@ -178,11 +196,37 @@ public class POP3MockFolder extends POP3MockFolder0 implements MailboxEventListe
     }
 
     @Override
+    public void messageAdded(final MailboxFolder mf, final MockMessage msg) {
+        // ignore
+        // TODO JavaMail impl seems to not fire a event here for pop3, so we
+        // ignore it
+
+    }
+
+    @Override
+    public void messageChanged(final MailboxFolder mf, final MockMessage msg, final boolean headerChanged, final boolean flagsChanged) {
+        notifyMessageChangedListeners(MessageChangedEvent.FLAGS_CHANGED, msg);
+
+    }
+
+    @Override
+    public void messageExpunged(final MailboxFolder mf, final MockMessage msg, final boolean removed) {
+        // not valid for pop3
+
+    }
+
+    @Override
     public synchronized void open(final int mode) throws MessagingException {
         checkClosed();
         opened = true;
         logger.debug("Open " + objectId);
         notifyConnectionListeners(ConnectionEvent.OPENED);
+    }
+
+    @Override
+    public void uidInvalidated() {
+        // not valid for pop3
+
     }
 
     protected synchronized void checkClosed() {
@@ -199,50 +243,5 @@ public class POP3MockFolder extends POP3MockFolder0 implements MailboxEventListe
 
         }
     }
-
-	@Override
-	public void folderCreated(MailboxFolder mf) {
-		//not valid for pop3
-		
-	}
-
-	@Override
-	public void folderDeleted(MailboxFolder mf) {
-		//not valid for pop3
-		
-	}
-
-	@Override
-	public void folderRenamed(String from, MailboxFolder to) {
-		//not valid for pop3
-		
-	}
-
-	@Override
-	public void messageAdded(MailboxFolder mf, MockMessage msg) {
-		//ignore
-		//TODO JavaMail impl seems to not fire a event here for pop3, so we ignore it
-		
-	}
-
-	@Override
-	public void messageChanged(MailboxFolder mf, MockMessage msg,
-			boolean headerChanged, boolean flagsChanged) {
-		notifyMessageChangedListeners(MessageChangedEvent.FLAGS_CHANGED, msg);
-		
-	}
-
-	@Override
-	public void messageExpunged(MailboxFolder mf, MockMessage msg,
-			boolean removed) {
-		//not valid for pop3
-		
-	}
-
-	@Override
-	public void uidInvalidated() {
-		//not valid for pop3
-		
-	}
 
 }

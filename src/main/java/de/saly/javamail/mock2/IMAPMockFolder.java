@@ -48,7 +48,7 @@ import com.sun.mail.imap.IMAPFolder;
 
 import de.saly.javamail.mock2.MailboxFolder.MailboxEventListener;
 
-public class IMAPMockFolder extends IMAPFolder implements MailboxEventListener{
+public class IMAPMockFolder extends IMAPFolder implements MailboxEventListener {
 
     private final MailboxFolder mailboxFolder;
 
@@ -155,8 +155,9 @@ public class IMAPMockFolder extends IMAPFolder implements MailboxEventListener{
 
         final Message[] removed = wrap(mailboxFolder.expunge());
 
-        if(removed.length > 0)
-        notifyMessageRemovedListeners(true, removed);
+        if (removed.length > 0) {
+            notifyMessageRemovedListeners(true, removed);
+        }
 
         return removed;
 
@@ -168,10 +169,11 @@ public class IMAPMockFolder extends IMAPFolder implements MailboxEventListener{
         checkOpened();
         checkWriteMode();
         final Message[] removed = wrap(mailboxFolder.expunge(msgs));
-        
-        if(removed.length > 0)
-        notifyMessageRemovedListeners(true, removed);
-        
+
+        if (removed.length > 0) {
+            notifyMessageRemovedListeners(true, removed);
+        }
+
         return removed;
 
     }
@@ -179,6 +181,24 @@ public class IMAPMockFolder extends IMAPFolder implements MailboxEventListener{
     @Override
     public synchronized void fetch(final Message[] msgs, final FetchProfile fp) throws MessagingException {
         // do nothing
+    }
+
+    @Override
+    public void folderCreated(final MailboxFolder mf) {
+        // ignore
+
+    }
+
+    @Override
+    public void folderDeleted(final MailboxFolder mf) {
+        // ignore
+
+    }
+
+    @Override
+    public void folderRenamed(final String from, final MailboxFolder to) {
+        // ignore
+
     }
 
     @Override
@@ -325,6 +345,11 @@ public class IMAPMockFolder extends IMAPFolder implements MailboxEventListener{
     }
 
     @Override
+    public void handleResponse(final Response r) {
+        throw new RuntimeException("not implemented/should not happen");
+    }
+
+    @Override
     public boolean hasNewMessages() throws MessagingException {
         checkExists();
         return getNewMessageCount() > 0;
@@ -355,6 +380,25 @@ public class IMAPMockFolder extends IMAPFolder implements MailboxEventListener{
     }
 
     @Override
+    public void messageAdded(final MailboxFolder mf, final MockMessage msg) {
+        notifyMessageAddedListeners(new Message[] { msg });
+
+    }
+
+    @Override
+    public void messageChanged(final MailboxFolder mf, final MockMessage msg, final boolean headerChanged, final boolean flagsChanged) {
+
+        notifyMessageChangedListeners(MessageChangedEvent.FLAGS_CHANGED, msg);
+
+    }
+
+    @Override
+    public void messageExpunged(final MailboxFolder mf, final MockMessage msg, final boolean removed) {
+        // ignore
+
+    }
+
+    @Override
     public void open(final int mode) throws MessagingException {
         checkClosed();
         checkExists();
@@ -378,11 +422,12 @@ public class IMAPMockFolder extends IMAPFolder implements MailboxEventListener{
     }
 
     @Override
-	public void handleResponse(Response r) {
-		throw new RuntimeException("not implemented/should not happen");
-	}
+    public void uidInvalidated() {
 
-	private Message[] wrap(final Message[] msgs) throws MessagingException {
+        // ignore
+    }
+
+    private Message[] wrap(final Message[] msgs) throws MessagingException {
         final Message[] ret = new Message[msgs.length];
         int i = 0;
         for (final Message message : msgs) {
@@ -420,50 +465,4 @@ public class IMAPMockFolder extends IMAPFolder implements MailboxEventListener{
             throw new IllegalStateException("Folder " + getFullName() + " is readonly" + " (" + objectId + ")");
         }
     }
-
-    
-    @Override
-	public void folderCreated(MailboxFolder mf) {
-		// ignore
-		
-	}
-
-	@Override
-	public void folderDeleted(MailboxFolder mf) {
-		// ignore
-		
-	}
-
-	@Override
-	public void folderRenamed(String from, MailboxFolder to) {
-		// ignore
-		
-	}
-
-	@Override
-	public void messageAdded(MailboxFolder mf, MockMessage msg) {
-		notifyMessageAddedListeners(new Message[]{msg});
-		
-	}
-
-	@Override
-	public void messageChanged(MailboxFolder mf, MockMessage msg,
-			boolean headerChanged, boolean flagsChanged) {
-	    
-        notifyMessageChangedListeners(MessageChangedEvent.FLAGS_CHANGED, msg);
-		
-	}
-
-	@Override
-	public void messageExpunged(MailboxFolder mf, MockMessage msg,
-			boolean removed) {
-		// ignore
-		
-	}
-
-	@Override
-	public void uidInvalidated() {
-		
-		// ignore
-	}
 }

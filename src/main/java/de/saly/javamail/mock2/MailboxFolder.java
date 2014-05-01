@@ -32,15 +32,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
-import java.util.Vector;
 
 import javax.mail.Flags;
 import javax.mail.Flags.Flag;
 import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.UIDFolder;
-import javax.mail.event.MessageCountEvent;
-import javax.mail.event.MessageCountListener;
 import javax.mail.internet.MimeMessage;
 
 public class MailboxFolder implements MockMessage.FlagChangeListener {
@@ -51,7 +48,7 @@ public class MailboxFolder implements MockMessage.FlagChangeListener {
     private boolean exists = true;
     private final MockMailbox mailbox;
     private volatile List<MailboxEventListener> mailboxEventListeners = Collections.synchronizedList(new ArrayList<MailboxEventListener>());
-   
+
     private final Map<Long, MockMessage> messages = new HashMap<Long, MockMessage>();
 
     private String name;
@@ -76,17 +73,7 @@ public class MailboxFolder implements MockMessage.FlagChangeListener {
 
         logger.debug("Created " + name + " (exists: " + exists + ")");
     }
-    
-	public synchronized void addMailboxEventListener(MailboxEventListener l) {
-		if (l != null)
-			mailboxEventListeners.add(l);
-	}
 
-	public synchronized void removeMailboxEventListener(MailboxEventListener l) {
-		if (l != null)
-			mailboxEventListeners.remove(l);
-	}
-        
     public synchronized Message add(final MimeMessage e) throws MessagingException {
         checkExists();
 
@@ -101,16 +88,19 @@ public class MailboxFolder implements MockMessage.FlagChangeListener {
 
         messages.put(uniqueMessageId, mockMessage);
 
-        
-        	for (MailboxEventListener mailboxEventListener : mailboxEventListeners) {
-        		mailboxEventListener.messageAdded(this, mockMessage);
-    		}
-            
-        
+        for (final MailboxEventListener mailboxEventListener : mailboxEventListeners) {
+            mailboxEventListener.messageAdded(this, mockMessage);
+        }
 
         logger.debug("Message ID " + uniqueMessageId + " to " + getFullName() + " added for user " + mailbox.getAddress());
 
         return mockMessage;
+    }
+
+    public synchronized void addMailboxEventListener(final MailboxEventListener l) {
+        if (l != null) {
+            mailboxEventListeners.add(l);
+        }
     }
 
     public synchronized MailboxFolder create() {
@@ -137,11 +127,10 @@ public class MailboxFolder implements MockMessage.FlagChangeListener {
             mailboxEventListener.folderCreated(this);
         }*/
 
-        for (MailboxEventListener mailboxEventListener : mailboxEventListeners) {
-        	 mailboxEventListener.folderCreated(this);
-		}
-        
-        
+        for (final MailboxEventListener mailboxEventListener : mailboxEventListeners) {
+            mailboxEventListener.folderCreated(this);
+        }
+
         logger.debug("Folder " + this.getFullName() + " created");
         return this;
 
@@ -166,10 +155,10 @@ public class MailboxFolder implements MockMessage.FlagChangeListener {
 
         parent.children.remove(this);
         this.exists = false;
-    
-        for (MailboxEventListener mailboxEventListener : mailboxEventListeners) {
-        	  mailboxEventListener.folderDeleted(this);
-		}
+
+        for (final MailboxEventListener mailboxEventListener : mailboxEventListeners) {
+            mailboxEventListener.folderDeleted(this);
+        }
         logger.debug("Folder " + this.getFullName() + " deleted");
 
     }
@@ -210,10 +199,10 @@ public class MailboxFolder implements MockMessage.FlagChangeListener {
 
             expunged.add(messages.remove(((MockMessage) msg).getMockid()));
             ((MockMessage) msg).setExpunged(true);
-            
-for (MailboxEventListener mailboxEventListener : mailboxEventListeners) {
-	mailboxEventListener.messageExpunged(this, (MockMessage) msg, true);
-    		}
+
+            for (final MailboxEventListener mailboxEventListener : mailboxEventListeners) {
+                mailboxEventListener.messageExpunged(this, (MockMessage) msg, true);
+            }
         }
 
         logger.debug(expunged.size() + " messages expunged (deleted) from" + getFullName());
@@ -238,10 +227,10 @@ for (MailboxEventListener mailboxEventListener : mailboxEventListeners) {
 
             expunged.add(messages.remove(((MockMessage) msg).getMockid()));
             ((MockMessage) msg).setExpunged(true);
-           
-for (MailboxEventListener mailboxEventListener : mailboxEventListeners) {
-	 mailboxEventListener.messageExpunged(this, (MockMessage) msg, true);
-    		}
+
+            for (final MailboxEventListener mailboxEventListener : mailboxEventListeners) {
+                mailboxEventListener.messageExpunged(this, (MockMessage) msg, true);
+            }
         }
 
         logger.debug(expunged.size() + " messages expunged (deleted) from " + getFullName());
@@ -321,8 +310,6 @@ for (MailboxEventListener mailboxEventListener : mailboxEventListeners) {
         return sms.toArray(new Message[sms.size()]);
     }
 
-    // private List<Message> unread = new ArrayList<Message>();
-
     public synchronized Message[] getByIds(final long[] id /*final Folder folder*/) {
         checkExists();
         final List<Long> idlist = new ArrayList<Long>();
@@ -346,6 +333,8 @@ for (MailboxEventListener mailboxEventListener : mailboxEventListeners) {
         logger.debug("getByIds(" + Arrays.toString(id) + ") for " + getFullName() + " returns " + sms.size());
         return sms.toArray(new Message[sms.size()]);
     }
+
+    // private List<Message> unread = new ArrayList<Message>();
 
     public synchronized Message getByMsgNum(final int msgnum/*, final Folder folder*/) {
         checkExists();
@@ -517,11 +506,10 @@ for (MailboxEventListener mailboxEventListener : mailboxEventListeners) {
     public synchronized void invalidateUid() {
         checkExists();
         uidValidity += 10;
-       
-        
-        for (MailboxEventListener mailboxEventListener : mailboxEventListeners) {
-        	mailboxEventListener.uidInvalidated();
-		}
+
+        for (final MailboxEventListener mailboxEventListener : mailboxEventListeners) {
+            mailboxEventListener.uidInvalidated();
+        }
         logger.debug("UidValidity invalidated, new UidValidity is " + uidValidity);
     }
 
@@ -566,39 +554,44 @@ for (MailboxEventListener mailboxEventListener : mailboxEventListeners) {
     @Override
     public void onFlagChange(final MockMessage msg, final Flags flags, final boolean set) {
 
-        
-        for (MailboxEventListener mailboxEventListener : mailboxEventListeners) {
-        	mailboxEventListener.messageChanged(this, msg, false, true);
-		}
-    
+        for (final MailboxEventListener mailboxEventListener : mailboxEventListeners) {
+            mailboxEventListener.messageChanged(this, msg, false, true);
+        }
 
         logger.debug("Flags of message " + msg.getMockid() + " change");
 
-		if(messages.size() > 0){
-        try {
-            if (set && messages.get(msg.getMockid()).getFlags().contains(flags)) {
-                return;
+        if (messages.size() > 0 && messages.get(msg.getMockid()) != null) {
+            try {
+                if (set && messages.get(msg.getMockid()).getFlags().contains(flags)) {
+                    return;
 
+                }
+
+                if (set && !messages.get(msg.getMockid()).getFlags().contains(flags)) {
+                    messages.get(msg.getMockid()).setFlags(flags, set);
+
+                }
+
+                if (!set && messages.get(msg.getMockid()).getFlags().contains(flags)) {
+                    messages.get(msg.getMockid()).setFlags(flags, set);
+
+                }
+
+                if (!set && !messages.get(msg.getMockid()).getFlags().contains(flags)) {
+                    return;
+
+                }
+            } catch (final Exception e) {
+                logger.error("Error while changing flags " + e.toString(), e);
             }
+        }
 
-            if (set && !messages.get(msg.getMockid()).getFlags().contains(flags)) {
-                messages.get(msg.getMockid()).setFlags(flags, set);
+    }
 
-            }
-
-            if (!set && messages.get(msg.getMockid()).getFlags().contains(flags)) {
-                messages.get(msg.getMockid()).setFlags(flags, set);
-
-            }
-
-            if (!set && !messages.get(msg.getMockid()).getFlags().contains(flags)) {
-                return;
-
-            }
-        } catch (final Exception e) {            
-            logger.error("Error while changing flags "+e.toString(),e);
-        }}
-
+    public synchronized void removeMailboxEventListener(final MailboxEventListener l) {
+        if (l != null) {
+            mailboxEventListeners.remove(l);
+        }
     }
 
     public synchronized void renameFolder(final String newName) {
@@ -609,11 +602,9 @@ for (MailboxEventListener mailboxEventListener : mailboxEventListeners) {
 
         name = newName;
 
-       
-        
-        for (MailboxEventListener mailboxEventListener : mailboxEventListeners) {
-        	mailboxEventListener.folderRenamed(tmpOldName, this);
-		}
+        for (final MailboxEventListener mailboxEventListener : mailboxEventListeners) {
+            mailboxEventListener.folderRenamed(tmpOldName, this);
+        }
 
         // TODO purge old folders, exists =false
 

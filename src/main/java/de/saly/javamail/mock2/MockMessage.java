@@ -237,7 +237,7 @@ public class MockMessage extends MimeMessage implements Comparable<MockMessage> 
         if (flagChangeListener != null) {
             flagChangeListener.onFlagChange(this, flag, set);
         }
-               
+
     }
 
     /* (non-Javadoc)

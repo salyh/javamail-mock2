@@ -46,7 +46,7 @@
 <FONT color="green">043</FONT>        private Folder folder;<a name="line.43"></a>
 <FONT color="green">044</FONT>        private final MailboxFolder mbf;<a name="line.44"></a>
 <FONT color="green">045</FONT>        private final long mockid;<a name="line.45"></a>
-<FONT color="green">046</FONT>        final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());<a name="line.46"></a>
+<FONT color="green">046</FONT>        protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());<a name="line.46"></a>
 <FONT color="green">047</FONT>    <a name="line.47"></a>
 <FONT color="green">048</FONT>        protected MockMessage(final Message source, final Folder folder) throws MessagingException {<a name="line.48"></a>
 <FONT color="green">049</FONT>            this((MimeMessage) source, ((MockMessage) source).mockid, ((MockMessage) source).mbf, ((MockMessage) source).flagChangeListener);<a name="line.49"></a>

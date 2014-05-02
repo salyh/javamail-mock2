@@ -51,7 +51,7 @@
 <a class="jxr_linenumber" name="L43" href="#L43">43</a>      <strong class="jxr_keyword">private</strong> Folder folder;
 <a class="jxr_linenumber" name="L44" href="#L44">44</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> <a href="../../../../de/saly/javamail/mock2/MailboxFolder.html">MailboxFolder</a> mbf;
 <a class="jxr_linenumber" name="L45" href="#L45">45</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">long</strong> mockid;
-<a class="jxr_linenumber" name="L46" href="#L46">46</a>      <strong class="jxr_keyword">final</strong> org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(<strong class="jxr_keyword">this</strong>.getClass());
+<a class="jxr_linenumber" name="L46" href="#L46">46</a>      <strong class="jxr_keyword">protected</strong> <strong class="jxr_keyword">final</strong> org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(<strong class="jxr_keyword">this</strong>.getClass());
 <a class="jxr_linenumber" name="L47" href="#L47">47</a>  
 <a class="jxr_linenumber" name="L48" href="#L48">48</a>      <strong class="jxr_keyword">protected</strong> <a href="../../../../de/saly/javamail/mock2/MockMessage.html">MockMessage</a>(<strong class="jxr_keyword">final</strong> Message source, <strong class="jxr_keyword">final</strong> Folder folder) <strong class="jxr_keyword">throws</strong> MessagingException {
 <a class="jxr_linenumber" name="L49" href="#L49">49</a>          <strong class="jxr_keyword">this</strong>((MimeMessage) source, ((MockMessage) source).mockid, ((MockMessage) source).mbf, ((MockMessage) source).flagChangeListener);

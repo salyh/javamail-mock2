@@ -45,7 +45,7 @@
 <FONT color="green">042</FONT>        private volatile boolean connected;<a name="line.42"></a>
 <FONT color="green">043</FONT>        private MockMailbox mailbox;<a name="line.43"></a>
 <FONT color="green">044</FONT>        private final UUID objectId = UUID.randomUUID();<a name="line.44"></a>
-<FONT color="green">045</FONT>        final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());<a name="line.45"></a>
+<FONT color="green">045</FONT>        protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());<a name="line.45"></a>
 <FONT color="green">046</FONT>    <a name="line.46"></a>
 <FONT color="green">047</FONT>        public POP3MockStore(final Session session, final URLName urlname) {<a name="line.47"></a>
 <FONT color="green">048</FONT>            this(session, urlname, "pop3", false);<a name="line.48"></a>

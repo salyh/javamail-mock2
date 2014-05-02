@@ -19,14 +19,14 @@ under the License.
 -->
 <rss version="0.91">
   <channel>
-    <title>Javamail Mock2 - Checkstyle report</title>
+    <title>Javamail Mock2 (Mode: halfmock) - Checkstyle report</title>
     <link>https://github.com/salyh/javamail-mock2</link>
-    <description>Javamail Mock2 - Checkstyle report</description>
+    <description>Javamail Mock2 (Mode: halfmock) - Checkstyle report</description>
     <language>en-us</language>
     <copyright>&#169;2014</copyright>
     <item>
-      <title>File: 12,
-             Errors: 241,
+      <title>File: 13,
+             Errors: 248,
              Warnings: 0,
              Infos: 0
       </title>
@@ -60,34 +60,6 @@ under the License.
               </tr>
                           <tr>
                 <td>
-                  <a href="https://github.com/salyh/javamail-mock2/checkstyle.html#de.saly.javamail.mock2.IMAPMockFolder.java">de/saly/javamail/mock2/IMAPMockFolder.java</a>
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  47
-                </td>
-              </tr>
-                          <tr>
-                <td>
-                  <a href="https://github.com/salyh/javamail-mock2/checkstyle.html#de.saly.javamail.mock2.MockMessage.java">de/saly/javamail/mock2/MockMessage.java</a>
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  48
-                </td>
-              </tr>
-                          <tr>
-                <td>
                   <a href="https://github.com/salyh/javamail-mock2/checkstyle.html#de.saly.javamail.mock2.IMAPSSLMockStore.java">de/saly/javamail/mock2/IMAPSSLMockStore.java</a>
                 </td>
                 <td>
@@ -98,20 +70,6 @@ under the License.
                 </td>
                 <td>
                   2
-                </td>
-              </tr>
-                          <tr>
-                <td>
-                  <a href="https://github.com/salyh/javamail-mock2/checkstyle.html#de.saly.javamail.mock2.IMAPMockStore.java">de/saly/javamail/mock2/IMAPMockStore.java</a>
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  21
                 </td>
               </tr>
                           <tr>
@@ -140,6 +98,90 @@ under the License.
                 </td>
                 <td>
                   19
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/salyh/javamail-mock2/checkstyle.html#com.sun.mail.pop3.POP3MockFolder0.java">com/sun/mail/pop3/POP3MockFolder0.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  2
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/salyh/javamail-mock2/checkstyle.html#de.saly.javamail.mock2.MailboxFolder.java">de/saly/javamail/mock2/MailboxFolder.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  61
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/salyh/javamail-mock2/checkstyle.html#de.saly.javamail.mock2.IMAPMockFolder.java">de/saly/javamail/mock2/IMAPMockFolder.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  47
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/salyh/javamail-mock2/checkstyle.html#de.saly.javamail.mock2.MockMessage.java">de/saly/javamail/mock2/MockMessage.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  48
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/salyh/javamail-mock2/checkstyle.html#de.saly.javamail.mock2.IMAPMockStore.java">de/saly/javamail/mock2/IMAPMockStore.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  21
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/salyh/javamail-mock2/checkstyle.html#de.saly.javamail.mock2.Providers.java">de/saly/javamail/mock2/Providers.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  7
                 </td>
               </tr>
                           <tr>
@@ -173,34 +215,6 @@ under the License.
                           <tr>
                 <td>
                   <a href="https://github.com/salyh/javamail-mock2/checkstyle.html#de.saly.javamail.mock2.POP3SSLMockStore.java">de/saly/javamail/mock2/POP3SSLMockStore.java</a>
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  2
-                </td>
-              </tr>
-                          <tr>
-                <td>
-                  <a href="https://github.com/salyh/javamail-mock2/checkstyle.html#de.saly.javamail.mock2.MailboxFolder.java">de/saly/javamail/mock2/MailboxFolder.java</a>
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  61
-                </td>
-              </tr>
-                          <tr>
-                <td>
-                  <a href="https://github.com/salyh/javamail-mock2/checkstyle.html#com.sun.mail.pop3.POP3MockFolder0.java">com/sun/mail/pop3/POP3MockFolder0.java</a>
                 </td>
                 <td>
                   0

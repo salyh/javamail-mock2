@@ -42,7 +42,7 @@ public class POP3MockStore extends POP3Store {
     private volatile boolean connected;
     private MockMailbox mailbox;
     private final UUID objectId = UUID.randomUUID();
-    final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());
+    protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());
 
     public POP3MockStore(final Session session, final URLName urlname) {
         this(session, urlname, "pop3", false);

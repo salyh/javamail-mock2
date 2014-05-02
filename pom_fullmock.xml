@@ -11,16 +11,16 @@
 	<packaging>jar</packaging>
 
 	<properties>
-		<mock.postfix>_halfmock_only</mock.postfix>
+		<mock.postfix></mock.postfix>
 		<github.global.server>github</github.global.server>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
 
-	<artifactId>javamail-mock2-halfmock</artifactId>
+	<artifactId>javamail-mock2-fullmock</artifactId>
 	<version>0.5-beta3</version>
-	<name>Javamail Mock2 (Mode: halfmock)</name>
-	<description>Open source mock classes for mock up JavaMail (Mode: halfmock)</description>
+	<name>Javamail Mock2 (Mode: fullmock)</name>
+	<description>Open source mock classes for mock up JavaMail (Mode: fullmock)</description>
 
 
 

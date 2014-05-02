@@ -60,7 +60,7 @@ public class IMAPMockFolder extends IMAPFolder implements MailboxEventListener {
 
     private final IMAPMockStore store;
 
-    final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());
+    protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());
 
     protected IMAPMockFolder(final IMAPMockStore store, final MailboxFolder mailboxFolder) {
         super("DUMMY_NAME_WHICH_MUST_NOT_BE_VISIBLE", MailboxFolder.SEPARATOR, store, false);

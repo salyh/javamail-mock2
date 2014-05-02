@@ -38,7 +38,7 @@ public class IMAPDefaultMockFolder extends DefaultFolder {
     private final MockMailbox mailbox;
     // private final IMAPMockFolder[] children;
     private final IMAPMockStore store;
-    final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());
+    protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());
 
     protected IMAPDefaultMockFolder(final IMAPMockStore store, final MockMailbox mailbox) {
         super(store);

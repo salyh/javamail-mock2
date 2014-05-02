@@ -1,6 +1,13 @@
-protocol=smtp; type=transport; class=de.saly.javamail.mock2.MockTransport; vendor=JavaMail Mock2 provider;
-protocol=smtps; type=transport; class=de.saly.javamail.mock2.MockTransport; vendor=JavaMail Mock2 provider;
-protocol=pop3; type=store; class=de.saly.javamail.mock2.POP3MockStore; vendor=JavaMail Mock2 provider;
-protocol=imap; type=store; class=de.saly.javamail.mock2.IMAPMockStore; vendor=JavaMail Mock2 provider;
-protocol=pop3s; type=store; class=de.saly.javamail.mock2.POP3SSLMockStore; vendor=JavaMail Mock2 provider;
-protocol=imaps; type=store; class=de.saly.javamail.mock2.IMAPSSLMockStore; vendor=JavaMail Mock2 provider;
+protocol=mock_smtp; type=transport; class=de.saly.javamail.mock2.MockTransport; vendor=JavaMail Mock2 provider;
+protocol=mock_smtps; type=transport; class=de.saly.javamail.mock2.MockTransport; vendor=JavaMail Mock2 provider;
+protocol=mock_pop3; type=store; class=de.saly.javamail.mock2.POP3MockStore; vendor=JavaMail Mock2 provider;
+protocol=mock_imap; type=store; class=de.saly.javamail.mock2.IMAPMockStore; vendor=JavaMail Mock2 provider;
+protocol=mock_pop3s; type=store; class=de.saly.javamail.mock2.POP3SSLMockStore; vendor=JavaMail Mock2 provider;
+protocol=mock_imaps; type=store; class=de.saly.javamail.mock2.IMAPSSLMockStore; vendor=JavaMail Mock2 provider;
+#Override real providers
+protocol=smtp${mock.postfix}; type=transport; class=de.saly.javamail.mock2.MockTransport; vendor=JavaMail Mock2 provider;
+protocol=smtps${mock.postfix}; type=transport; class=de.saly.javamail.mock2.MockTransport; vendor=JavaMail Mock2 provider;
+protocol=pop3${mock.postfix}; type=store; class=de.saly.javamail.mock2.POP3MockStore; vendor=JavaMail Mock2 provider;
+protocol=imap${mock.postfix}; type=store; class=de.saly.javamail.mock2.IMAPMockStore; vendor=JavaMail Mock2 provider;
+protocol=pop3s${mock.postfix}; type=store; class=de.saly.javamail.mock2.POP3SSLMockStore; vendor=JavaMail Mock2 provider;
+protocol=imaps${mock.postfix}; type=store; class=de.saly.javamail.mock2.IMAPSSLMockStore; vendor=JavaMail Mock2 provider;

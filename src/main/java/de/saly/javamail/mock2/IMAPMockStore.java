@@ -42,7 +42,12 @@ public class IMAPMockStore extends IMAPStore {
     // private IMAPMockFolder folder;
     private MockMailbox mailbox;
     private final UUID objectId = UUID.randomUUID();
-    final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());
+    protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());
+
+    {
+        logger.warn("IMAP Mock Store in use");
+        System.out.println("IMAP Mock Store in use");
+    }
 
     public IMAPMockStore(final Session session, final URLName urlname) {
         this(session, urlname, "imap", false);

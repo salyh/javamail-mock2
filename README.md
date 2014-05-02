@@ -8,28 +8,52 @@ Open source mock classes for mockup JavaMail (useful especially for unittest)
 <a href="mailto:hendrikdev22@gmail.com">E-Mail hendrikdev22@gmail.com</a><p>
 <a href="https://twitter.com/hendrikdev22">Twitter @hendrikdev22</a>
 
-<h3>Usage</h3>
-* Include the javamail-mock2-x.x.jar file in your unittest project (or use maven, see below)
-* Create a mailbox and add folders/messages or use Transport.sendMail to put mails into your INBOX
-* Use the JavaMail API to retrieve mails via POP3 or IMAP or do whatever your application does
+<h3>Features</h3>
 * Support imap, imaps, pop3, pop3s
 * Supported for POP3: cast to POP3Folder, Folder.getUID(Message msg)
 * Supported for IMAP: cast to IMAPFolder, cast to UIDFolder, Subfolders, Folder.getMessagesByUID(...), delete/rename folders, append messages
 * Unsupported for the moment: IMAP extensions like IDLE, CONDSTORE, ... and casts to POP3Message/IMAPMessage, store listeners
 
+The library come in two flavors/modes
+* Normal (or halfmock): Allows also to connect to real IMAP/POP servers. Use this if you have mixed testing setups (mockend an real server). Require a little bit of setup.
+* Fullmock: Use this if you have mocked test only. Normally no setup required.
+
 See unittests on how to use the library.
 Maven site docu is here: [http://salyh.github.io/javamail-mock2/](http://salyh.github.io/javamail-mock2)
 
-<h3>Maven</h3>
+<h3>Usage: Normal (or halfmock)</h3>
+* Include the javamail-mock2-halfmock-x.x.jar file in your unittest project (or use maven, see below)
+* Make sure every operation that should be mocked uses as protocol either mock_smtp, mock_imap or mock_pop3 (or mock_smtps, mock_imaps or mock_pop3s)
+* See unittest how to archive this
+* Create a mailbox and add folders/messages or use Transport.sendMail to put mails into your INBOX
+* Use the JavaMail API to retrieve mails via POP3 or IMAP or do whatever your application does
+
+<h3>Usage: Fullomock</h3>
+* Include the javamail-mock2-fullmock-x.x.jar file in your unittest project (or use maven, see below)
+* Create a mailbox and add folders/messages or use Transport.sendMail to put mails into your INBOX
+* Use the JavaMail API to retrieve mails via POP3 or IMAP or do whatever your application does
+
+<h3>Maven: Normal (or halfmock)</h3>
 ```xml
 	<dependency>
 		<groupId>de.saly</groupId>
-		<artifactId>javamail-mock2</artifactId>
-		<version>0.4-beta3</version>
+		<artifactId>javamail-mock2-halfmock</artifactId>
+		<version>0.5-beta3</version>
+		<scope>test</scope>
 	</dependency>
 ```
 
-<h3>Example</h3>
+<h3>Maven: Fullmock</h3>
+```xml
+	<dependency>
+		<groupId>de.saly</groupId>
+		<artifactId>javamail-mock2-fullmock</artifactId>
+		<version>0.5-beta3</version>
+		<scope>test</scope>
+	</dependency>
+```
+
+<h3>Examples</h3>
 ```java
 
 		final MockMailbox mb = MockMailbox.get("hendrik@unknown.com");
@@ -45,7 +69,7 @@ Maven site docu is here: [http://salyh.github.io/javamail-mock2/](http://salyh.g
         mf.add(msg); // 13
 
 		Session session = Session.getInstance(new Properties());
-        final Store store = session.getStore("pop3s");
+        final Store store = session.getStore("pop3s"); //or mock_pop3s for halfmock
         store.connect("hendrik@unknown.com", null);
         final Folder inbox = store.getFolder("INBOX");
         inbox.open(Folder.READ_ONLY);

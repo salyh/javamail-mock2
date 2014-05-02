@@ -13,3 +13,8 @@ hs_err_pid*
 
 /target
 .DS_Store
+*.sh
+.classpath
+.project
+.settings/
+pom.inc

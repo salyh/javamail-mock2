@@ -40,6 +40,7 @@ public abstract class AbstractTestCase {
 
     @Rule
     public TestName name = new TestName();
+    protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());
     protected Session session = null;
 
     @Before
@@ -47,7 +48,12 @@ public abstract class AbstractTestCase {
 
         System.out.println("--------------------- SETUP " + name.getMethodName() + " -------------------------------------");
 
-        session = Session.getInstance(getProperties());
+        final Properties props = getProperties();
+        if (logger.isDebugEnabled()) {
+            props.setProperty("mail.debug", "true");
+        }
+
+        session = Session.getInstance(props);
 
         MockMailbox.resetAll();
 
@@ -63,7 +69,6 @@ public abstract class AbstractTestCase {
 
     protected Properties getProperties() {
         final Properties props = new Properties();
-        props.setProperty("mail.debug", "true");
         return props;
     }
 

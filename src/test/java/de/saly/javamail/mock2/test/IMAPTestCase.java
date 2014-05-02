@@ -26,6 +26,7 @@
 package de.saly.javamail.mock2.test;
 
 import java.util.Arrays;
+import java.util.Properties;
 
 import javax.mail.Flags.Flag;
 import javax.mail.Folder;
@@ -46,6 +47,7 @@ import com.sun.mail.imap.IMAPStore;
 
 import de.saly.javamail.mock2.MailboxFolder;
 import de.saly.javamail.mock2.MockMailbox;
+import de.saly.javamail.mock2.Providers;
 import de.saly.javamail.mock2.test.support.MockTestException;
 
 public class IMAPTestCase extends AbstractTestCase {
@@ -66,7 +68,7 @@ public class IMAPTestCase extends AbstractTestCase {
         mf.add(msg); // 13
         mb.getRoot().getOrAddSubFolder("test").create().add(msg);
 
-        final Store store = session.getStore("imap");
+        final Store store = session.getStore("mock_imap");
         store.connect("hendrik@unknown.com", null);
         final Folder defaultFolder = store.getDefaultFolder();
         final Folder test = defaultFolder.getFolder("test");
@@ -96,7 +98,7 @@ public class IMAPTestCase extends AbstractTestCase {
         mf.add(msg); // 12
         mf.add(msg); // 13
 
-        final Store store = session.getStore("imap");
+        final Store store = session.getStore();
         store.connect("hendrik@unknown.com", null);
         final Folder inbox = store.getFolder("INBOX");
         inbox.open(Folder.READ_WRITE);
@@ -135,7 +137,7 @@ public class IMAPTestCase extends AbstractTestCase {
         mf.add(msg); // 13
         mb.getRoot().getOrAddSubFolder("test").create().add(msg);
 
-        final Store store = session.getStore("imaps");
+        final Store store = session.getStore();
         store.connect("hendrik@unknown.com", null);
         final Folder defaultFolder = store.getDefaultFolder();
         final Folder inbox = defaultFolder.getFolder("INBOX");
@@ -171,7 +173,7 @@ public class IMAPTestCase extends AbstractTestCase {
         mf.add(msg); // 13
         mb.getRoot().getOrAddSubFolder("test").create().add(msg);
 
-        final Store store = session.getStore("imaps");
+        final Store store = session.getStore(Providers.getIMAPProvider("makes_no_difference_here", true, true));
         store.connect("hendrik@unknown.com", null);
         final Folder defaultFolder = store.getDefaultFolder();
         final Folder inbox = defaultFolder.getFolder("INBOX");
@@ -202,7 +204,7 @@ public class IMAPTestCase extends AbstractTestCase {
         mf.add(msg); // 13
         mb.getRoot().getOrAddSubFolder("test").create().add(msg);
 
-        final Store store = session.getStore("imaps");
+        final Store store = session.getStore("mock_imaps");
         store.connect("hendrik@unknown.com", null);
         final Folder defaultFolder = store.getDefaultFolder();
         final Folder inbox = defaultFolder.getFolder("INBOX");
@@ -245,7 +247,7 @@ public class IMAPTestCase extends AbstractTestCase {
         mf.add(msg); // 13
         mb.getRoot().getOrAddSubFolder("test").create().add(msg);
 
-        final Store store = session.getStore("imap");
+        final Store store = session.getStore("mock_imap");
         store.connect("hendrik@unknown.com", null);
         final Folder defaultFolder = store.getDefaultFolder();
         final Folder test = defaultFolder.getFolder("test");
@@ -276,7 +278,7 @@ public class IMAPTestCase extends AbstractTestCase {
         mf.add(msg); // 13
         mb.getRoot().getOrAddSubFolder("test").create().add(msg);
 
-        final Store store = session.getStore("imap");
+        final Store store = session.getStore("mock_imap");
         store.connect("hendrik@unknown.com", null);
         final Folder defaultFolder = store.getDefaultFolder();
         final Folder test = defaultFolder.getFolder("test");
@@ -305,7 +307,7 @@ public class IMAPTestCase extends AbstractTestCase {
         mf.add(msg); // 13
         mb.getRoot().getOrAddSubFolder("test").create().add(msg);
 
-        final Store store = session.getStore("imap");
+        final Store store = session.getStore("mock_imap");
         store.connect("hendrik@unknown.com", null);
         final Folder defaultFolder = store.getDefaultFolder();
         final Folder test = defaultFolder.getFolder("test");
@@ -331,7 +333,7 @@ public class IMAPTestCase extends AbstractTestCase {
         msg.setText("Some text here ...");
         msg.setRecipient(RecipientType.TO, new InternetAddress("hendrik@unknown.com"));
 
-        final Store store = session.getStore("imap");
+        final Store store = session.getStore("mock_imap");
         store.connect("hendrik@unknown.com", null);
         final Folder root = store.getDefaultFolder();
         final Folder level1 = root.getFolder("LEVEL1");
@@ -369,6 +371,14 @@ public class IMAPTestCase extends AbstractTestCase {
         Assert.assertEquals(1, level2.getMessageCount());
 
         Assert.assertEquals(2, root.list().length);
+    }
+
+    @Override
+    protected Properties getProperties() {
+
+        final Properties props = super.getProperties();
+        props.setProperty("mail.store.protocol", "mock_imaps");
+        return props;
     }
 
 }

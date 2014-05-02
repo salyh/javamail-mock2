@@ -37,7 +37,12 @@ import javax.mail.internet.MimeMessage;
 
 public class MockTransport extends Transport {
 
-    final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());
+    protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());
+
+    {
+        logger.warn("Mock Transport in use");
+        System.out.println("Mock Transport in use");
+    }
 
     public MockTransport(final Session session, final URLName urlname) {
         super(session, urlname);

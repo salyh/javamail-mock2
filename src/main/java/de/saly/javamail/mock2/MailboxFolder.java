@@ -57,7 +57,7 @@ public class MailboxFolder implements MockMessage.FlagChangeListener {
     private boolean simulateError = false;
     private long uidValidity = 50;
     private long uniqueMessageId = 10;
-    final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());
+    protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());
 
     protected MailboxFolder(final String name, final MockMailbox mb, final boolean exists) {
         super();

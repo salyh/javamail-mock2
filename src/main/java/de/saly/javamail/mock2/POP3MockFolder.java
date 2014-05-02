@@ -47,14 +47,17 @@ public class POP3MockFolder extends POP3MockFolder0 implements MailboxEventListe
     private final MailboxFolder mailboxFolder;
     private final UUID objectId = UUID.randomUUID();
     private volatile boolean opened;
-    final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());
+    protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());
+
+    {
+        logger.warn("POP3 Mock Store in use");
+        System.out.println("POP3 Mock Store in use");
+    }
 
     protected POP3MockFolder(final POP3MockStore store, final MailboxFolder mailboxFolder) {
         super(store);
         this.mailboxFolder = mailboxFolder;
         this.mailboxFolder.addMailboxEventListener(this);
-        logger.debug("Folder created " + objectId);
-
     }
 
     /*

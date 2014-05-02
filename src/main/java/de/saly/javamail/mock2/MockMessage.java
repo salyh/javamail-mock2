@@ -43,7 +43,7 @@ public class MockMessage extends MimeMessage implements Comparable<MockMessage> 
     private Folder folder;
     private final MailboxFolder mbf;
     private final long mockid;
-    final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());
+    protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());
 
     protected MockMessage(final Message source, final Folder folder) throws MessagingException {
         this((MimeMessage) source, ((MockMessage) source).mockid, ((MockMessage) source).mbf, ((MockMessage) source).flagChangeListener);

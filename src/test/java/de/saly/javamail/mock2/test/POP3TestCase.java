@@ -26,6 +26,7 @@
 package de.saly.javamail.mock2.test;
 
 import java.util.Arrays;
+import java.util.Properties;
 
 import javax.mail.Flags.Flag;
 import javax.mail.Folder;
@@ -43,6 +44,7 @@ import com.sun.mail.pop3.POP3Folder;
 
 import de.saly.javamail.mock2.MailboxFolder;
 import de.saly.javamail.mock2.MockMailbox;
+import de.saly.javamail.mock2.Providers;
 import de.saly.javamail.mock2.test.support.MockTestException;
 
 public class POP3TestCase extends AbstractTestCase {
@@ -62,7 +64,7 @@ public class POP3TestCase extends AbstractTestCase {
         mf.add(msg); // 12
         mf.add(msg); // 13
 
-        final Store store = session.getStore("pop3s");
+        final Store store = session.getStore();
         store.connect("hendrik@unknown.com", null);
         final Folder inbox = store.getFolder("INBOX");
         inbox.open(Folder.READ_ONLY);
@@ -100,7 +102,7 @@ public class POP3TestCase extends AbstractTestCase {
         mf.add(msg); // 13
         mb.getRoot().getOrAddSubFolder("test").create().add(msg);
 
-        final Store store = session.getStore("pop3");
+        final Store store = session.getStore("mock_pop3");
         store.connect("hendrik@unknown.com", null);
         final Folder defaultFolder = store.getDefaultFolder();
         final Folder inbox = defaultFolder.getFolder("INBOX");
@@ -143,7 +145,7 @@ public class POP3TestCase extends AbstractTestCase {
         mf.add(msg); // 13
         mb.getRoot().getOrAddSubFolder("test").create().add(msg);
 
-        final Store store = session.getStore("pop3");
+        final Store store = session.getStore(Providers.getPOP3Provider("makes_no_differernce", false, true));
         store.connect("hendrik@unknown.com", null);
         final Folder defaultFolder = store.getDefaultFolder();
 
@@ -153,6 +155,14 @@ public class POP3TestCase extends AbstractTestCase {
             throw new MockTestException(e);
         }
 
+    }
+
+    @Override
+    protected Properties getProperties() {
+
+        final Properties props = super.getProperties();
+        props.setProperty("mail.store.protocol", "mock_pop3s");
+        return props;
     }
 
 }

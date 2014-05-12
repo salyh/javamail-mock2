@@ -3,15 +3,16 @@ javamail-mock2
 
 Open source mock classes for mockup JavaMail (useful especially for unittest)
 
-[![Build Status](https://travis-ci.org/salyh/javamail-mock2.svg?branch=v0.4-beta1)](https://travis-ci.org/salyh/javamail-mock2)
+[![Build Status](https://travis-ci.org/salyh/javamail-mock2.svg?branch=master)](https://travis-ci.org/salyh/javamail-mock2)
 
 <a href="mailto:hendrikdev22@gmail.com">E-Mail hendrikdev22@gmail.com</a><p>
 <a href="https://twitter.com/hendrikdev22">Twitter @hendrikdev22</a>
 
 <h3>Features</h3>
-* Support imap, imaps, pop3, pop3s
+* Support imap, imaps, pop3, pop3s, smtp, smtps
 * Supported for POP3: cast to POP3Folder, Folder.getUID(Message msg)
 * Supported for IMAP: cast to IMAPFolder, cast to UIDFolder, Subfolders, Folder.getMessagesByUID(...), delete/rename folders, append messages
+* Support for SMTP: Mock Transport.send()
 * Unsupported for the moment: IMAP extensions like IDLE, CONDSTORE, ... and casts to POP3Message/IMAPMessage, store listeners
 
 The library come in two flavors/modes

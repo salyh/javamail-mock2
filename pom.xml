@@ -18,7 +18,7 @@
 
 
 	<artifactId>javamail-mock2-halfmock</artifactId>
-	<version>0.5-beta3</version>
+	<version>0.5-beta4</version>
 	<name>Javamail Mock2 (Mode: halfmock)</name>
 	<description>Open source mock classes for mock up JavaMail (Mode: halfmock)</description>
 
@@ -203,7 +203,7 @@
 		<dependency>
 			<groupId>com.sun.mail</groupId>
 			<artifactId>javax.mail</artifactId>
-			<version>1.5.1</version>
+			<version>1.5.2</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>activation</artifactId>

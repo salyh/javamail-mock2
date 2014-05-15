@@ -18,7 +18,7 @@
 
 
 	<artifactId>javamail-mock2-fullmock</artifactId>
-	<version>0.5-beta3</version>
+	<version>0.5-beta4</version>
 	<name>Javamail Mock2 (Mode: fullmock)</name>
 	<description>Open source mock classes for mock up JavaMail (Mode: fullmock)</description>
 

@@ -36,6 +36,8 @@ import javax.mail.MessagingException;
 import javax.mail.Session;
 import javax.mail.Store;
 import javax.mail.UIDFolder;
+import javax.mail.event.MessageCountEvent;
+import javax.mail.event.MessageCountListener;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
@@ -51,6 +53,77 @@ import de.saly.javamail.mock2.Providers;
 import de.saly.javamail.mock2.test.support.MockTestException;
 
 public class IMAPTestCase extends AbstractTestCase {
+
+    private static class IdleMessageCountListener implements MessageCountListener {
+
+        private int addedCount;
+        private int removedCount;
+
+        protected int getAddedCount() {
+            return addedCount;
+        }
+
+        protected int getRemovedCount() {
+            return removedCount;
+        }
+
+        @Override
+        public void messagesAdded(final MessageCountEvent e) {
+            addedCount++;
+
+        }
+
+        @Override
+        public void messagesRemoved(final MessageCountEvent e) {
+            removedCount++;
+
+        }
+
+    }
+
+    private static class IdleThread extends Thread {
+        private Exception exception;
+        private final Folder folder;
+        private int idleCount;
+
+        public IdleThread(final Folder folder) {
+            super();
+            this.folder = folder;
+        }
+
+        protected Exception getException() {
+            return exception;
+        }
+
+        protected int getIdleCount() {
+            return idleCount;
+        }
+
+        @Override
+        public void run() {
+
+            while (!Thread.interrupted()) {
+                try {
+                    // System.out.println("enter idle");
+                    ((IMAPFolder) folder).idle();
+                    idleCount++;
+                    // System.out.println("leave idle");
+                } catch (final Exception e) {
+                    exception = e;
+                }
+            }
+
+            // System.out.println("leave run()");
+        }
+    }
+
+    @Override
+    protected Properties getProperties() {
+
+        final Properties props = super.getProperties();
+        props.setProperty("mail.store.protocol", "mock_imaps");
+        return props;
+    }
 
     @Test(expected = MockTestException.class)
     public void testACLUnsupported() throws Exception {
@@ -231,8 +304,8 @@ public class IMAPTestCase extends AbstractTestCase {
         inbox.close(true);
     }
 
-    @Test(expected = MockTestException.class)
-    public void testIDLEUnsupported() throws Exception {
+    @Test
+    public void testIDLESupported() throws Exception {
 
         final MockMailbox mb = MockMailbox.get("hendrik@unknown.com");
         final MailboxFolder mf = mb.getInbox();
@@ -250,15 +323,31 @@ public class IMAPTestCase extends AbstractTestCase {
         final Store store = session.getStore("mock_imap");
         store.connect("hendrik@unknown.com", null);
         final Folder defaultFolder = store.getDefaultFolder();
-        final Folder test = defaultFolder.getFolder("test");
+        final IMAPFolder test = (IMAPFolder) defaultFolder.getFolder("test");
 
-        final IMAPStore imapStore = (IMAPStore) store;
+        final IdleMessageCountListener mcl = new IdleMessageCountListener();
+        test.addMessageCountListener(mcl);
 
-        try {
-            imapStore.idle();
-        } catch (final MessagingException e) {
-            throw new MockTestException(e);
-        }
+        test.open(Folder.READ_WRITE);
+
+        final IdleThread it = new IdleThread(test);
+        it.start();
+
+        test.addMessages(new Message[] { msg });
+        test.addMessages(new Message[] { msg });
+        test.addMessages(new Message[] { msg });
+
+        Thread.sleep(500);
+
+        it.interrupt();
+        it.join();
+
+        test.close(true);
+
+        Assert.assertNull(it.getException());
+        Assert.assertEquals(3, mcl.getAddedCount());
+        Assert.assertEquals(0, mcl.getRemovedCount());
+        Assert.assertEquals(4, test.getMessageCount());
 
     }
 
@@ -371,14 +460,6 @@ public class IMAPTestCase extends AbstractTestCase {
         Assert.assertEquals(1, level2.getMessageCount());
 
         Assert.assertEquals(2, root.list().length);
-    }
-
-    @Override
-    protected Properties getProperties() {
-
-        final Properties props = super.getProperties();
-        props.setProperty("mail.store.protocol", "mock_imaps");
-        return props;
     }
 
 }

@@ -38,10 +38,15 @@ import de.saly.javamail.mock2.MockMailbox;
 
 public abstract class AbstractTestCase {
 
+    protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());
     @Rule
     public TestName name = new TestName();
-    protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());
     protected Session session = null;
+
+    protected Properties getProperties() {
+        final Properties props = new Properties();
+        return props;
+    }
 
     @Before
     public void setUp() throws Exception {
@@ -65,11 +70,6 @@ public abstract class AbstractTestCase {
         System.out.println("--------------------- TEARDOWN " + name.getMethodName() + " -------------------------------------");
         session = null;
 
-    }
-
-    protected Properties getProperties() {
-        final Properties props = new Properties();
-        return props;
     }
 
 }

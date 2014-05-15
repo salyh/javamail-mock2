@@ -35,10 +35,10 @@ import com.sun.mail.imap.DefaultFolder;
 
 public class IMAPDefaultMockFolder extends DefaultFolder {
 
+    protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());
     private final MockMailbox mailbox;
     // private final IMAPMockFolder[] children;
     private final IMAPMockStore store;
-    protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());
 
     protected IMAPDefaultMockFolder(final IMAPMockStore store, final MockMailbox mailbox) {
         super(store);

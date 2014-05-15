@@ -44,10 +44,10 @@ import com.sun.mail.pop3.POP3MockFolder0;
 import de.saly.javamail.mock2.MailboxFolder.MailboxEventListener;
 
 public class POP3MockFolder extends POP3MockFolder0 implements MailboxEventListener {
+    protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());
     private final MailboxFolder mailboxFolder;
     private final UUID objectId = UUID.randomUUID();
     private volatile boolean opened;
-    protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());
 
     {
         logger.warn("POP3 Mock Store in use");
@@ -66,6 +66,21 @@ public class POP3MockFolder extends POP3MockFolder0 implements MailboxEventListe
         return null;
     }
       */
+
+    protected synchronized void checkClosed() {
+        if (opened) {
+            throw new IllegalStateException("This operation is not allowed on an open folder " + objectId);
+        }
+    }
+
+    protected synchronized void checkOpened() throws FolderClosedException {
+
+        if (!opened) {
+
+            throw new IllegalStateException("This operation is not allowed on a closed folder " + objectId);
+
+        }
+    }
 
     @Override
     public synchronized void close(final boolean expunge) throws MessagingException {
@@ -230,21 +245,6 @@ public class POP3MockFolder extends POP3MockFolder0 implements MailboxEventListe
     public void uidInvalidated() {
         // not valid for pop3
 
-    }
-
-    protected synchronized void checkClosed() {
-        if (opened) {
-            throw new IllegalStateException("This operation is not allowed on an open folder " + objectId);
-        }
-    }
-
-    protected synchronized void checkOpened() throws FolderClosedException {
-
-        if (!opened) {
-
-            throw new IllegalStateException("This operation is not allowed on a closed folder " + objectId);
-
-        }
     }
 
 }

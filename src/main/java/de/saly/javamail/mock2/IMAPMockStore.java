@@ -25,6 +25,8 @@
  **********************************************************************************************************************/
 package de.saly.javamail.mock2;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -39,10 +41,10 @@ import com.sun.mail.imap.IMAPStore;
 
 public class IMAPMockStore extends IMAPStore {
     private boolean connected;
+    protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());
     // private IMAPMockFolder folder;
     private MockMailbox mailbox;
     private final UUID objectId = UUID.randomUUID();
-    protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());
 
     {
         logger.warn("IMAP Mock Store in use");
@@ -58,6 +60,12 @@ public class IMAPMockStore extends IMAPStore {
         super(session, url, name, isSSL);
 
         logger.debug("Created " + objectId);
+    }
+
+    protected void checkConnected() throws MessagingException {
+        if (!isConnected()) {
+            throw new MessagingException("Not connected");
+        }
     }
 
     @Override
@@ -117,20 +125,29 @@ public class IMAPMockStore extends IMAPStore {
     }
 
     @Override
+    public Folder[] getPersonalNamespaces() throws MessagingException {
+        return new Folder[] { getDefaultFolder() };
+    }
+
+    @Override
     public synchronized Quota[] getQuota(final String root) throws MessagingException {
         throw new MessagingException("QUOTA not supported");
     }
 
-    @Override
-    public Folder[] getSharedNamespaces() throws MessagingException {
-        // TODO Auto-generated method stub
-        return super.getSharedNamespaces();
+    // /-------
+
+    Session getSession() {
+        return session;
     }
 
     @Override
-    public Folder[] getUserNamespaces(final String user) throws MessagingException {
-        // TODO Auto-generated method stub
-        return super.getUserNamespaces(user);
+    public Folder[] getSharedNamespaces() throws MessagingException {
+        return new Folder[0];
+    }
+
+    @Override
+    public Folder[] getUserNamespaces(final String user) {
+        return new Folder[0];
     }
 
     /* (non-Javadoc)
@@ -138,37 +155,40 @@ public class IMAPMockStore extends IMAPStore {
      */
     @Override
     public synchronized boolean hasCapability(final String capability) throws MessagingException {
-        return capability != null && capability.toLowerCase().startsWith("imap4");
+        return capability != null
+                && (capability.toLowerCase().startsWith("IMAP4") || capability.toLowerCase().startsWith("IDLE") || capability.toLowerCase()
+                        .startsWith("ID"));
     }
 
     @Override
     public synchronized Map<String, String> id(final Map<String, String> clientParams) throws MessagingException {
-        throw new MessagingException("ID not supported");
-    }
+        checkConnected();
+        final Map<String, String> id = new HashMap<String, String>();
 
-    // /-------
+        id.put("name", "JavaMail Mock2");
+        id.put("vendor", "Hendrik Saly");
+        id.put("support-url", "https://github.com/salyh/javamail-mock2/issues");
+
+        return Collections.unmodifiableMap(id);
+
+    }
 
     @Override
     public void idle() throws MessagingException {
-        throw new MessagingException("IDLE not supported");
+        checkConnected();
+
+        try {
+            Thread.sleep(1000);
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return;
+        }
+
     }
 
     @Override
     public boolean isConnected() {
         return this.connected;
-    }
-
-    @Override
-    public synchronized void setQuota(final Quota quota) throws MessagingException {
-
-        throw new MessagingException("QUOTA not supported");
-
-    }
-
-    protected void checkConnected() throws MessagingException {
-        if (!isConnected()) {
-            throw new MessagingException("Not connected");
-        }
     }
 
     @Override
@@ -186,8 +206,11 @@ public class IMAPMockStore extends IMAPStore {
         return true;
     }
 
-    Session getSession() {
-        return session;
+    @Override
+    public synchronized void setQuota(final Quota quota) throws MessagingException {
+
+        throw new MessagingException("QUOTA not supported");
+
     }
 
 }

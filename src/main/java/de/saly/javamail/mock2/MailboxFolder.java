@@ -39,25 +39,55 @@ import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.UIDFolder;
 import javax.mail.internet.MimeMessage;
+import javax.mail.search.SearchTerm;
 
 public class MailboxFolder implements MockMessage.FlagChangeListener {
 
-    public static final char SEPARATOR = '/';
+    public static interface MailboxEventListener {
 
+        void folderCreated(MailboxFolder mf);
+
+        void folderDeleted(MailboxFolder mf);
+
+        void folderRenamed(String from, MailboxFolder to);
+
+        void messageAdded(MailboxFolder mf, MockMessage msg);
+
+        void messageChanged(MailboxFolder mf, MockMessage msg, boolean headerChanged, boolean flagsChanged); // TODO
+                                                                                                             // header
+                                                                                                             // change
+                                                                                                             // can
+                                                                                                             // not
+                                                                                                             // happen
+                                                                                                             // because
+                                                                                                             // MockMessage
+                                                                                                             // is
+                                                                                                             // readonly?
+
+        void messageExpunged(MailboxFolder mf, MockMessage msg, boolean removed);
+
+        void uidInvalidated();
+
+    }
+
+    public static final char SEPARATOR = '/';
     private final List<MailboxFolder> children = new ArrayList<MailboxFolder>();
     private boolean exists = true;
+    protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());
+
     private final MockMailbox mailbox;
+
     private volatile List<MailboxEventListener> mailboxEventListeners = Collections.synchronizedList(new ArrayList<MailboxEventListener>());
 
     private final Map<Long, MockMessage> messages = new HashMap<Long, MockMessage>();
-
     private String name;
-
     private MailboxFolder parent;
     private boolean simulateError = false;
+    private boolean subscribed;
+
     private long uidValidity = 50;
+
     private long uniqueMessageId = 10;
-    protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());
 
     protected MailboxFolder(final String name, final MockMailbox mb, final boolean exists) {
         super();
@@ -100,6 +130,32 @@ public class MailboxFolder implements MockMessage.FlagChangeListener {
     public synchronized void addMailboxEventListener(final MailboxEventListener l) {
         if (l != null) {
             mailboxEventListeners.add(l);
+        }
+    }
+
+    protected MailboxFolder addSpecialSubFolder(final String name) {
+        final MailboxFolder mbt = new MailboxFolder(name, mailbox, true);
+        mbt.parent = this;
+        children.add(mbt);
+        return mbt;
+    }
+
+    protected void checkExists() {
+        if (!exists) {
+            throw new IllegalStateException("folder does not exist");
+        }
+    }
+
+    protected void checkFolderName(final String name) {
+        checkFolderName(name, true);
+    }
+
+    protected void checkFolderName(final String name, final boolean checkSeparator) {
+        // TODO regex for valid folder names?
+
+        if (name == null || name.trim().equals("") || name.equalsIgnoreCase("inbox") || checkSeparator
+                && name.contains(String.valueOf(SEPARATOR))) {
+            throw new IllegalArgumentException("name '" + name + "' is not valid");
         }
     }
 
@@ -273,6 +329,8 @@ public class MailboxFolder implements MockMessage.FlagChangeListener {
         return m;
     }
 
+    // private List<Message> unread = new ArrayList<Message>();
+
     public synchronized Message[] getByIds(final long start, final long end/* final Folder folder*/) {
         checkExists();
         final List<MockMessage> sms = new ArrayList<MockMessage>();
@@ -333,8 +391,6 @@ public class MailboxFolder implements MockMessage.FlagChangeListener {
         logger.debug("getByIds(" + Arrays.toString(id) + ") for " + getFullName() + " returns " + sms.size());
         return sms.toArray(new Message[sms.size()]);
     }
-
-    // private List<Message> unread = new ArrayList<Message>();
 
     public synchronized Message getByMsgNum(final int msgnum/*, final Folder folder*/) {
         checkExists();
@@ -489,6 +545,13 @@ public class MailboxFolder implements MockMessage.FlagChangeListener {
         return uidValidity;
     }
 
+    /**
+     * @return the uniqueMessageId
+     */
+    protected long getUniqueMessageId() {
+        return uniqueMessageId;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -533,6 +596,10 @@ public class MailboxFolder implements MockMessage.FlagChangeListener {
      */
     public boolean isSimulateError() {
         return simulateError;
+    }
+
+    protected boolean isSubscribed() {
+        return subscribed;
     }
 
     public synchronized void markMessageAsDeleted(final Message e) throws MessagingException {
@@ -617,6 +684,25 @@ public class MailboxFolder implements MockMessage.FlagChangeListener {
 
     }
 
+    public Message[] search(final SearchTerm term, final Message[] msgsToSearch) {
+        final List<MockMessage> sms = new ArrayList<MockMessage>();
+        final List<Message> msgsToSearchL = new ArrayList<Message>();
+
+        if (msgsToSearch != null) {
+            msgsToSearchL.addAll(Arrays.asList(msgsToSearch));
+        }
+
+        for (final Message msg : getMessages()) {
+            if (term != null && term.match(msg)) {
+
+                if (msgsToSearch == null || msgsToSearchL.contains(msg)) {
+                    sms.add((MockMessage) msg);
+                }
+            }
+        }
+        return sms.toArray(new Message[sms.size()]);
+    }
+
     /**
      * @param simulateError
      *            the simulateError to set
@@ -625,63 +711,7 @@ public class MailboxFolder implements MockMessage.FlagChangeListener {
         this.simulateError = simulateError;
     }
 
-    protected MailboxFolder addSpecialSubFolder(final String name) {
-        final MailboxFolder mbt = new MailboxFolder(name, mailbox, true);
-        mbt.parent = this;
-        children.add(mbt);
-        return mbt;
-    }
-
-    protected void checkExists() {
-        if (!exists) {
-            throw new IllegalStateException("folder does not exist");
-        }
-    }
-
-    protected void checkFolderName(final String name) {
-        checkFolderName(name, true);
-    }
-
-    protected void checkFolderName(final String name, final boolean checkSeparator) {
-        // TODO regex for valid folder names?
-
-        if (name == null || name.trim().equals("") || name.equalsIgnoreCase("inbox") || checkSeparator
-                && name.contains(String.valueOf(SEPARATOR))) {
-            throw new IllegalArgumentException("name '" + name + "' is not valid");
-        }
-    }
-
-    /**
-     * @return the uniqueMessageId
-     */
-    protected long getUniqueMessageId() {
-        return uniqueMessageId;
-    }
-
-    public static interface MailboxEventListener {
-
-        void folderCreated(MailboxFolder mf);
-
-        void folderDeleted(MailboxFolder mf);
-
-        void folderRenamed(String from, MailboxFolder to);
-
-        void messageAdded(MailboxFolder mf, MockMessage msg);
-
-        void messageChanged(MailboxFolder mf, MockMessage msg, boolean headerChanged, boolean flagsChanged); // TODO
-                                                                                                             // header
-                                                                                                             // change
-                                                                                                             // can
-                                                                                                             // not
-                                                                                                             // happen
-                                                                                                             // because
-                                                                                                             // MockMessage
-                                                                                                             // is
-                                                                                                             // readonly?
-
-        void messageExpunged(MailboxFolder mf, MockMessage msg, boolean removed);
-
-        void uidInvalidated();
-
+    protected void setSubscribed(final boolean subscribed) {
+        this.subscribed = subscribed;
     }
 }

@@ -39,11 +39,16 @@ import javax.mail.internet.MimeMessage;
 
 public class MockMessage extends MimeMessage implements Comparable<MockMessage> {
 
+    public static interface FlagChangeListener {
+        void onFlagChange(MockMessage msg, Flags flags, boolean set);
+    }
+
     private final FlagChangeListener flagChangeListener;
     private Folder folder;
-    private final MailboxFolder mbf;
-    private final long mockid;
     protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());
+    private final MailboxFolder mbf;
+
+    private final long mockid;
 
     protected MockMessage(final Message source, final Folder folder) throws MessagingException {
         this((MimeMessage) source, ((MockMessage) source).mockid, ((MockMessage) source).mbf, ((MockMessage) source).flagChangeListener);
@@ -124,14 +129,14 @@ public class MockMessage extends MimeMessage implements Comparable<MockMessage> 
         }
     }
 
+    // IllegalWriteException("Mock messages are read-only");
+
     /**
      * @return the mockid
      */
     public long getMockid() {
         return mockid;
     }
-
-    // IllegalWriteException("Mock messages are read-only");
 
     /* (non-Javadoc)
      * @see javax.mail.internet.MimeMessage#removeHeader(java.lang.String)
@@ -218,6 +223,12 @@ public class MockMessage extends MimeMessage implements Comparable<MockMessage> 
         throw new IllegalWriteException("Mock messages are read-only");
     }
 
+    @Override
+    protected void setExpunged(final boolean expunged) {
+
+        super.setExpunged(expunged);
+    }
+
     /* (non-Javadoc)
      * @see javax.mail.internet.MimeMessage#setFileName(java.lang.String)
      */
@@ -272,6 +283,12 @@ public class MockMessage extends MimeMessage implements Comparable<MockMessage> 
         throw new IllegalWriteException("Mock messages are read-only");
     }
 
+    @Override
+    protected void setMessageNumber(final int msgnum) {
+
+        super.setMessageNumber(msgnum);
+    }
+
     /* (non-Javadoc)
      * @see javax.mail.Message#setRecipient(javax.mail.Message.RecipientType, javax.mail.Address)
      */
@@ -320,6 +337,10 @@ public class MockMessage extends MimeMessage implements Comparable<MockMessage> 
         throw new IllegalWriteException("Mock messages are read-only");
     }
 
+    void setSpecialHeader(final String name, final String value) throws MessagingException {
+        super.addHeader(name, value);
+    }
+
     /* (non-Javadoc)
      * @see javax.mail.internet.MimeMessage#setSubject(java.lang.String)
      */
@@ -358,26 +379,6 @@ public class MockMessage extends MimeMessage implements Comparable<MockMessage> 
     @Override
     public void setText(final String text, final String charset, final String subtype) throws MessagingException {
         throw new IllegalWriteException("Mock messages are read-only");
-    }
-
-    @Override
-    protected void setExpunged(final boolean expunged) {
-
-        super.setExpunged(expunged);
-    }
-
-    @Override
-    protected void setMessageNumber(final int msgnum) {
-
-        super.setMessageNumber(msgnum);
-    }
-
-    void setSpecialHeader(final String name, final String value) throws MessagingException {
-        super.addHeader(name, value);
-    }
-
-    public static interface FlagChangeListener {
-        void onFlagChange(MockMessage msg, Flags flags, boolean set);
     }
 
 }

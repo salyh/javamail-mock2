@@ -40,9 +40,9 @@ import com.sun.mail.pop3.POP3Store;
 public class POP3MockStore extends POP3Store {
 
     private volatile boolean connected;
+    protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());
     private MockMailbox mailbox;
     private final UUID objectId = UUID.randomUUID();
-    protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());
 
     public POP3MockStore(final Session session, final URLName urlname) {
         this(session, urlname, "pop3", false);
@@ -60,6 +60,12 @@ public class POP3MockStore extends POP3Store {
     public Map capabilities() throws MessagingException {
 
         return new HashMap();
+    }
+
+    protected synchronized void checkConnected() throws MessagingException {
+        if (!isConnected()) {
+            throw new MessagingException("Not connected");
+        }
     }
 
     @Override
@@ -117,15 +123,13 @@ public class POP3MockStore extends POP3Store {
         return getFolder(url.getFile());
     }
 
+    synchronized Session getSession() {
+        return session;
+    }
+
     @Override
     public synchronized boolean isConnected() {
         return connected;
-    }
-
-    protected synchronized void checkConnected() throws MessagingException {
-        if (!isConnected()) {
-            throw new MessagingException("Not connected");
-        }
     }
 
     @Override
@@ -139,10 +143,6 @@ public class POP3MockStore extends POP3Store {
         }
         this.connected = true;
         return true;
-    }
-
-    synchronized Session getSession() {
-        return session;
     }
 
 }

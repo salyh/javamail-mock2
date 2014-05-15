@@ -49,6 +49,14 @@ import de.saly.javamail.mock2.test.support.MockTestException;
 
 public class POP3TestCase extends AbstractTestCase {
 
+    @Override
+    protected Properties getProperties() {
+
+        final Properties props = super.getProperties();
+        props.setProperty("mail.store.protocol", "mock_pop3s");
+        return props;
+    }
+
     @Test
     public void testAddMessages() throws Exception {
 
@@ -155,14 +163,6 @@ public class POP3TestCase extends AbstractTestCase {
             throw new MockTestException(e);
         }
 
-    }
-
-    @Override
-    protected Properties getProperties() {
-
-        final Properties props = super.getProperties();
-        props.setProperty("mail.store.protocol", "mock_pop3s");
-        return props;
     }
 
 }

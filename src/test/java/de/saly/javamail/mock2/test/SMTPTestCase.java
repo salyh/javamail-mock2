@@ -49,6 +49,14 @@ import de.saly.javamail.mock2.test.support.MockTestException;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class SMTPTestCase extends AbstractTestCase {
 
+    @Override
+    protected Properties getProperties() {
+
+        final Properties props = super.getProperties();
+        props.setProperty("mail.transport.protocol.rfc822", "mock_smtp");
+        return props;
+    }
+
     @Test(expected = MockTestException.class)
     public void test1SendMessageFailure() throws Exception {
 
@@ -113,14 +121,6 @@ public class SMTPTestCase extends AbstractTestCase {
         Assert.assertEquals("Test 1", inbox.getMessage(1).getSubject());
         inbox.close(false);
 
-    }
-
-    @Override
-    protected Properties getProperties() {
-
-        final Properties props = super.getProperties();
-        props.setProperty("mail.transport.protocol.rfc822", "mock_smtp");
-        return props;
     }
 
 }

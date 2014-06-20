@@ -42,652 +42,682 @@
 <FONT color="green">039</FONT>    import javax.mail.MessagingException;<a name="line.39"></a>
 <FONT color="green">040</FONT>    import javax.mail.UIDFolder;<a name="line.40"></a>
 <FONT color="green">041</FONT>    import javax.mail.internet.MimeMessage;<a name="line.41"></a>
-<FONT color="green">042</FONT>    <a name="line.42"></a>
-<FONT color="green">043</FONT>    public class MailboxFolder implements MockMessage.FlagChangeListener {<a name="line.43"></a>
-<FONT color="green">044</FONT>    <a name="line.44"></a>
-<FONT color="green">045</FONT>        public static final char SEPARATOR = '/';<a name="line.45"></a>
-<FONT color="green">046</FONT>    <a name="line.46"></a>
-<FONT color="green">047</FONT>        private final List&lt;MailboxFolder&gt; children = new ArrayList&lt;MailboxFolder&gt;();<a name="line.47"></a>
-<FONT color="green">048</FONT>        private boolean exists = true;<a name="line.48"></a>
-<FONT color="green">049</FONT>        private final MockMailbox mailbox;<a name="line.49"></a>
-<FONT color="green">050</FONT>        private volatile List&lt;MailboxEventListener&gt; mailboxEventListeners = Collections.synchronizedList(new ArrayList&lt;MailboxEventListener&gt;());<a name="line.50"></a>
+<FONT color="green">042</FONT>    import javax.mail.search.SearchTerm;<a name="line.42"></a>
+<FONT color="green">043</FONT>    <a name="line.43"></a>
+<FONT color="green">044</FONT>    public class MailboxFolder implements MockMessage.FlagChangeListener {<a name="line.44"></a>
+<FONT color="green">045</FONT>    <a name="line.45"></a>
+<FONT color="green">046</FONT>        public static interface MailboxEventListener {<a name="line.46"></a>
+<FONT color="green">047</FONT>    <a name="line.47"></a>
+<FONT color="green">048</FONT>            void folderCreated(MailboxFolder mf);<a name="line.48"></a>
+<FONT color="green">049</FONT>    <a name="line.49"></a>
+<FONT color="green">050</FONT>            void folderDeleted(MailboxFolder mf);<a name="line.50"></a>
 <FONT color="green">051</FONT>    <a name="line.51"></a>
-<FONT color="green">052</FONT>        private final Map&lt;Long, MockMessage&gt; messages = new HashMap&lt;Long, MockMessage&gt;();<a name="line.52"></a>
+<FONT color="green">052</FONT>            void folderRenamed(String from, MailboxFolder to);<a name="line.52"></a>
 <FONT color="green">053</FONT>    <a name="line.53"></a>
-<FONT color="green">054</FONT>        private String name;<a name="line.54"></a>
+<FONT color="green">054</FONT>            void messageAdded(MailboxFolder mf, MockMessage msg);<a name="line.54"></a>
 <FONT color="green">055</FONT>    <a name="line.55"></a>
-<FONT color="green">056</FONT>        private MailboxFolder parent;<a name="line.56"></a>
-<FONT color="green">057</FONT>        private boolean simulateError = false;<a name="line.57"></a>
-<FONT color="green">058</FONT>        private long uidValidity = 50;<a name="line.58"></a>
-<FONT color="green">059</FONT>        private long uniqueMessageId = 10;<a name="line.59"></a>
-<FONT color="green">060</FONT>        protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());<a name="line.60"></a>
-<FONT color="green">061</FONT>    <a name="line.61"></a>
-<FONT color="green">062</FONT>        protected MailboxFolder(final String name, final MockMailbox mb, final boolean exists) {<a name="line.62"></a>
-<FONT color="green">063</FONT>            super();<a name="line.63"></a>
-<FONT color="green">064</FONT>    <a name="line.64"></a>
-<FONT color="green">065</FONT>            if (name == null) {<a name="line.65"></a>
-<FONT color="green">066</FONT>                this.name = "";<a name="line.66"></a>
-<FONT color="green">067</FONT>            } else {<a name="line.67"></a>
-<FONT color="green">068</FONT>                this.name = name;<a name="line.68"></a>
-<FONT color="green">069</FONT>            }<a name="line.69"></a>
+<FONT color="green">056</FONT>            void messageChanged(MailboxFolder mf, MockMessage msg, boolean headerChanged, boolean flagsChanged); // TODO<a name="line.56"></a>
+<FONT color="green">057</FONT>                                                                                                                 // header<a name="line.57"></a>
+<FONT color="green">058</FONT>                                                                                                                 // change<a name="line.58"></a>
+<FONT color="green">059</FONT>                                                                                                                 // can<a name="line.59"></a>
+<FONT color="green">060</FONT>                                                                                                                 // not<a name="line.60"></a>
+<FONT color="green">061</FONT>                                                                                                                 // happen<a name="line.61"></a>
+<FONT color="green">062</FONT>                                                                                                                 // because<a name="line.62"></a>
+<FONT color="green">063</FONT>                                                                                                                 // MockMessage<a name="line.63"></a>
+<FONT color="green">064</FONT>                                                                                                                 // is<a name="line.64"></a>
+<FONT color="green">065</FONT>                                                                                                                 // readonly?<a name="line.65"></a>
+<FONT color="green">066</FONT>    <a name="line.66"></a>
+<FONT color="green">067</FONT>            void messageExpunged(MailboxFolder mf, MockMessage msg, boolean removed);<a name="line.67"></a>
+<FONT color="green">068</FONT>    <a name="line.68"></a>
+<FONT color="green">069</FONT>            void uidInvalidated();<a name="line.69"></a>
 <FONT color="green">070</FONT>    <a name="line.70"></a>
-<FONT color="green">071</FONT>            this.mailbox = mb;<a name="line.71"></a>
-<FONT color="green">072</FONT>            this.exists = exists;<a name="line.72"></a>
-<FONT color="green">073</FONT>    <a name="line.73"></a>
-<FONT color="green">074</FONT>            logger.debug("Created " + name + " (exists: " + exists + ")");<a name="line.74"></a>
-<FONT color="green">075</FONT>        }<a name="line.75"></a>
-<FONT color="green">076</FONT>    <a name="line.76"></a>
-<FONT color="green">077</FONT>        public synchronized Message add(final MimeMessage e) throws MessagingException {<a name="line.77"></a>
-<FONT color="green">078</FONT>            checkExists();<a name="line.78"></a>
+<FONT color="green">071</FONT>        }<a name="line.71"></a>
+<FONT color="green">072</FONT>    <a name="line.72"></a>
+<FONT color="green">073</FONT>        public static final char SEPARATOR = '/';<a name="line.73"></a>
+<FONT color="green">074</FONT>        private final List&lt;MailboxFolder&gt; children = new ArrayList&lt;MailboxFolder&gt;();<a name="line.74"></a>
+<FONT color="green">075</FONT>        private boolean exists = true;<a name="line.75"></a>
+<FONT color="green">076</FONT>        protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());<a name="line.76"></a>
+<FONT color="green">077</FONT>    <a name="line.77"></a>
+<FONT color="green">078</FONT>        private final MockMailbox mailbox;<a name="line.78"></a>
 <FONT color="green">079</FONT>    <a name="line.79"></a>
-<FONT color="green">080</FONT>            uniqueMessageId++;<a name="line.80"></a>
+<FONT color="green">080</FONT>        private volatile List&lt;MailboxEventListener&gt; mailboxEventListeners = Collections.synchronizedList(new ArrayList&lt;MailboxEventListener&gt;());<a name="line.80"></a>
 <FONT color="green">081</FONT>    <a name="line.81"></a>
-<FONT color="green">082</FONT>            final MockMessage mockMessage = new MockMessage(e, uniqueMessageId, this, this);<a name="line.82"></a>
-<FONT color="green">083</FONT>    <a name="line.83"></a>
-<FONT color="green">084</FONT>            mockMessage.setSpecialHeader("Message-ID", String.valueOf(uniqueMessageId));<a name="line.84"></a>
-<FONT color="green">085</FONT>            mockMessage.setSpecialHeader("X-Mock-Folder", getFullName());<a name="line.85"></a>
-<FONT color="green">086</FONT>            mockMessage.setFlags(new Flags(Flag.RECENT), true);<a name="line.86"></a>
-<FONT color="green">087</FONT>            // unread.add(e);<a name="line.87"></a>
-<FONT color="green">088</FONT>    <a name="line.88"></a>
-<FONT color="green">089</FONT>            messages.put(uniqueMessageId, mockMessage);<a name="line.89"></a>
-<FONT color="green">090</FONT>    <a name="line.90"></a>
-<FONT color="green">091</FONT>            for (final MailboxEventListener mailboxEventListener : mailboxEventListeners) {<a name="line.91"></a>
-<FONT color="green">092</FONT>                mailboxEventListener.messageAdded(this, mockMessage);<a name="line.92"></a>
-<FONT color="green">093</FONT>            }<a name="line.93"></a>
+<FONT color="green">082</FONT>        private final Map&lt;Long, MockMessage&gt; messages = new HashMap&lt;Long, MockMessage&gt;();<a name="line.82"></a>
+<FONT color="green">083</FONT>        private String name;<a name="line.83"></a>
+<FONT color="green">084</FONT>        private MailboxFolder parent;<a name="line.84"></a>
+<FONT color="green">085</FONT>        private boolean simulateError = false;<a name="line.85"></a>
+<FONT color="green">086</FONT>        private boolean subscribed;<a name="line.86"></a>
+<FONT color="green">087</FONT>    <a name="line.87"></a>
+<FONT color="green">088</FONT>        private long uidValidity = 50;<a name="line.88"></a>
+<FONT color="green">089</FONT>    <a name="line.89"></a>
+<FONT color="green">090</FONT>        private long uniqueMessageId = 10;<a name="line.90"></a>
+<FONT color="green">091</FONT>    <a name="line.91"></a>
+<FONT color="green">092</FONT>        protected MailboxFolder(final String name, final MockMailbox mb, final boolean exists) {<a name="line.92"></a>
+<FONT color="green">093</FONT>            super();<a name="line.93"></a>
 <FONT color="green">094</FONT>    <a name="line.94"></a>
-<FONT color="green">095</FONT>            logger.debug("Message ID " + uniqueMessageId + " to " + getFullName() + " added for user " + mailbox.getAddress());<a name="line.95"></a>
-<FONT color="green">096</FONT>    <a name="line.96"></a>
-<FONT color="green">097</FONT>            return mockMessage;<a name="line.97"></a>
-<FONT color="green">098</FONT>        }<a name="line.98"></a>
-<FONT color="green">099</FONT>    <a name="line.99"></a>
-<FONT color="green">100</FONT>        public synchronized void addMailboxEventListener(final MailboxEventListener l) {<a name="line.100"></a>
-<FONT color="green">101</FONT>            if (l != null) {<a name="line.101"></a>
-<FONT color="green">102</FONT>                mailboxEventListeners.add(l);<a name="line.102"></a>
-<FONT color="green">103</FONT>            }<a name="line.103"></a>
-<FONT color="green">104</FONT>        }<a name="line.104"></a>
-<FONT color="green">105</FONT>    <a name="line.105"></a>
-<FONT color="green">106</FONT>        public synchronized MailboxFolder create() {<a name="line.106"></a>
-<FONT color="green">107</FONT>            if (isExists()) {<a name="line.107"></a>
-<FONT color="green">108</FONT>                throw new IllegalStateException("already exists");<a name="line.108"></a>
-<FONT color="green">109</FONT>            }<a name="line.109"></a>
-<FONT color="green">110</FONT>            checkFolderName(this.name);<a name="line.110"></a>
+<FONT color="green">095</FONT>            if (name == null) {<a name="line.95"></a>
+<FONT color="green">096</FONT>                this.name = "";<a name="line.96"></a>
+<FONT color="green">097</FONT>            } else {<a name="line.97"></a>
+<FONT color="green">098</FONT>                this.name = name;<a name="line.98"></a>
+<FONT color="green">099</FONT>            }<a name="line.99"></a>
+<FONT color="green">100</FONT>    <a name="line.100"></a>
+<FONT color="green">101</FONT>            this.mailbox = mb;<a name="line.101"></a>
+<FONT color="green">102</FONT>            this.exists = exists;<a name="line.102"></a>
+<FONT color="green">103</FONT>    <a name="line.103"></a>
+<FONT color="green">104</FONT>            logger.debug("Created " + name + " (exists: " + exists + ")");<a name="line.104"></a>
+<FONT color="green">105</FONT>        }<a name="line.105"></a>
+<FONT color="green">106</FONT>    <a name="line.106"></a>
+<FONT color="green">107</FONT>        public synchronized Message add(final MimeMessage e) throws MessagingException {<a name="line.107"></a>
+<FONT color="green">108</FONT>            checkExists();<a name="line.108"></a>
+<FONT color="green">109</FONT>    <a name="line.109"></a>
+<FONT color="green">110</FONT>            uniqueMessageId++;<a name="line.110"></a>
 <FONT color="green">111</FONT>    <a name="line.111"></a>
-<FONT color="green">112</FONT>            exists = true;<a name="line.112"></a>
+<FONT color="green">112</FONT>            final MockMessage mockMessage = new MockMessage(e, uniqueMessageId, this, this);<a name="line.112"></a>
 <FONT color="green">113</FONT>    <a name="line.113"></a>
-<FONT color="green">114</FONT>            // TODO set parent and/or children to exists?<a name="line.114"></a>
-<FONT color="green">115</FONT>    <a name="line.115"></a>
-<FONT color="green">116</FONT>            if (parent != null &amp;&amp; !parent.isExists()) {<a name="line.116"></a>
-<FONT color="green">117</FONT>                parent.create();<a name="line.117"></a>
-<FONT color="green">118</FONT>            }<a name="line.118"></a>
-<FONT color="green">119</FONT>    <a name="line.119"></a>
-<FONT color="green">120</FONT>            /*children.clear();<a name="line.120"></a>
-<FONT color="green">121</FONT>    <a name="line.121"></a>
-<FONT color="green">122</FONT>            if (parent != null) {<a name="line.122"></a>
-<FONT color="green">123</FONT>                parent.children.add(this);<a name="line.123"></a>
-<FONT color="green">124</FONT>            }<a name="line.124"></a>
-<FONT color="green">125</FONT>    <a name="line.125"></a>
-<FONT color="green">126</FONT>            if (mailboxEventListener != null) {<a name="line.126"></a>
-<FONT color="green">127</FONT>                mailboxEventListener.folderCreated(this);<a name="line.127"></a>
-<FONT color="green">128</FONT>            }*/<a name="line.128"></a>
+<FONT color="green">114</FONT>            mockMessage.setSpecialHeader("Message-ID", String.valueOf(uniqueMessageId));<a name="line.114"></a>
+<FONT color="green">115</FONT>            mockMessage.setSpecialHeader("X-Mock-Folder", getFullName());<a name="line.115"></a>
+<FONT color="green">116</FONT>            mockMessage.setFlags(new Flags(Flag.RECENT), true);<a name="line.116"></a>
+<FONT color="green">117</FONT>            // unread.add(e);<a name="line.117"></a>
+<FONT color="green">118</FONT>    <a name="line.118"></a>
+<FONT color="green">119</FONT>            messages.put(uniqueMessageId, mockMessage);<a name="line.119"></a>
+<FONT color="green">120</FONT>    <a name="line.120"></a>
+<FONT color="green">121</FONT>            for (final MailboxEventListener mailboxEventListener : mailboxEventListeners) {<a name="line.121"></a>
+<FONT color="green">122</FONT>                mailboxEventListener.messageAdded(this, mockMessage);<a name="line.122"></a>
+<FONT color="green">123</FONT>            }<a name="line.123"></a>
+<FONT color="green">124</FONT>    <a name="line.124"></a>
+<FONT color="green">125</FONT>            logger.debug("Message ID " + uniqueMessageId + " to " + getFullName() + " added for user " + mailbox.getAddress());<a name="line.125"></a>
+<FONT color="green">126</FONT>    <a name="line.126"></a>
+<FONT color="green">127</FONT>            return mockMessage;<a name="line.127"></a>
+<FONT color="green">128</FONT>        }<a name="line.128"></a>
 <FONT color="green">129</FONT>    <a name="line.129"></a>
-<FONT color="green">130</FONT>            for (final MailboxEventListener mailboxEventListener : mailboxEventListeners) {<a name="line.130"></a>
-<FONT color="green">131</FONT>                mailboxEventListener.folderCreated(this);<a name="line.131"></a>
-<FONT color="green">132</FONT>            }<a name="line.132"></a>
-<FONT color="green">133</FONT>    <a name="line.133"></a>
-<FONT color="green">134</FONT>            logger.debug("Folder " + this.getFullName() + " created");<a name="line.134"></a>
-<FONT color="green">135</FONT>            return this;<a name="line.135"></a>
-<FONT color="green">136</FONT>    <a name="line.136"></a>
-<FONT color="green">137</FONT>        }<a name="line.137"></a>
-<FONT color="green">138</FONT>    <a name="line.138"></a>
-<FONT color="green">139</FONT>        public synchronized void deleteFolder(final boolean recurse) {<a name="line.139"></a>
-<FONT color="green">140</FONT>            checkExists();<a name="line.140"></a>
-<FONT color="green">141</FONT>            checkFolderName(this.name);<a name="line.141"></a>
+<FONT color="green">130</FONT>        public synchronized void addMailboxEventListener(final MailboxEventListener l) {<a name="line.130"></a>
+<FONT color="green">131</FONT>            if (l != null) {<a name="line.131"></a>
+<FONT color="green">132</FONT>                mailboxEventListeners.add(l);<a name="line.132"></a>
+<FONT color="green">133</FONT>            }<a name="line.133"></a>
+<FONT color="green">134</FONT>        }<a name="line.134"></a>
+<FONT color="green">135</FONT>    <a name="line.135"></a>
+<FONT color="green">136</FONT>        protected MailboxFolder addSpecialSubFolder(final String name) {<a name="line.136"></a>
+<FONT color="green">137</FONT>            final MailboxFolder mbt = new MailboxFolder(name, mailbox, true);<a name="line.137"></a>
+<FONT color="green">138</FONT>            mbt.parent = this;<a name="line.138"></a>
+<FONT color="green">139</FONT>            children.add(mbt);<a name="line.139"></a>
+<FONT color="green">140</FONT>            return mbt;<a name="line.140"></a>
+<FONT color="green">141</FONT>        }<a name="line.141"></a>
 <FONT color="green">142</FONT>    <a name="line.142"></a>
-<FONT color="green">143</FONT>            if (isRoot()) {<a name="line.143"></a>
-<FONT color="green">144</FONT>                throw new IllegalArgumentException("root cannot be deleted");<a name="line.144"></a>
-<FONT color="green">145</FONT>            }<a name="line.145"></a>
-<FONT color="green">146</FONT>    <a name="line.146"></a>
-<FONT color="green">147</FONT>            messages.clear();<a name="line.147"></a>
-<FONT color="green">148</FONT>            // unread.clear();<a name="line.148"></a>
-<FONT color="green">149</FONT>    <a name="line.149"></a>
-<FONT color="green">150</FONT>            if (recurse) {<a name="line.150"></a>
-<FONT color="green">151</FONT>                for (final MailboxFolder mf : getChildren()) {<a name="line.151"></a>
-<FONT color="green">152</FONT>                    mf.deleteFolder(recurse);<a name="line.152"></a>
-<FONT color="green">153</FONT>                }<a name="line.153"></a>
-<FONT color="green">154</FONT>            }<a name="line.154"></a>
+<FONT color="green">143</FONT>        protected void checkExists() {<a name="line.143"></a>
+<FONT color="green">144</FONT>            if (!exists) {<a name="line.144"></a>
+<FONT color="green">145</FONT>                throw new IllegalStateException("folder does not exist");<a name="line.145"></a>
+<FONT color="green">146</FONT>            }<a name="line.146"></a>
+<FONT color="green">147</FONT>        }<a name="line.147"></a>
+<FONT color="green">148</FONT>    <a name="line.148"></a>
+<FONT color="green">149</FONT>        protected void checkFolderName(final String name) {<a name="line.149"></a>
+<FONT color="green">150</FONT>            checkFolderName(name, true);<a name="line.150"></a>
+<FONT color="green">151</FONT>        }<a name="line.151"></a>
+<FONT color="green">152</FONT>    <a name="line.152"></a>
+<FONT color="green">153</FONT>        protected void checkFolderName(final String name, final boolean checkSeparator) {<a name="line.153"></a>
+<FONT color="green">154</FONT>            // TODO regex for valid folder names?<a name="line.154"></a>
 <FONT color="green">155</FONT>    <a name="line.155"></a>
-<FONT color="green">156</FONT>            parent.children.remove(this);<a name="line.156"></a>
-<FONT color="green">157</FONT>            this.exists = false;<a name="line.157"></a>
-<FONT color="green">158</FONT>    <a name="line.158"></a>
-<FONT color="green">159</FONT>            for (final MailboxEventListener mailboxEventListener : mailboxEventListeners) {<a name="line.159"></a>
-<FONT color="green">160</FONT>                mailboxEventListener.folderDeleted(this);<a name="line.160"></a>
-<FONT color="green">161</FONT>            }<a name="line.161"></a>
-<FONT color="green">162</FONT>            logger.debug("Folder " + this.getFullName() + " deleted");<a name="line.162"></a>
-<FONT color="green">163</FONT>    <a name="line.163"></a>
-<FONT color="green">164</FONT>        }<a name="line.164"></a>
-<FONT color="green">165</FONT>    <a name="line.165"></a>
-<FONT color="green">166</FONT>        @Override<a name="line.166"></a>
-<FONT color="green">167</FONT>        public boolean equals(final Object obj) {<a name="line.167"></a>
-<FONT color="green">168</FONT>            if (this == obj) {<a name="line.168"></a>
-<FONT color="green">169</FONT>                return true;<a name="line.169"></a>
-<FONT color="green">170</FONT>            }<a name="line.170"></a>
-<FONT color="green">171</FONT>            if (obj == null) {<a name="line.171"></a>
-<FONT color="green">172</FONT>                return false;<a name="line.172"></a>
-<FONT color="green">173</FONT>            }<a name="line.173"></a>
-<FONT color="green">174</FONT>            if (getClass() != obj.getClass()) {<a name="line.174"></a>
-<FONT color="green">175</FONT>                return false;<a name="line.175"></a>
-<FONT color="green">176</FONT>            }<a name="line.176"></a>
-<FONT color="green">177</FONT>            final MailboxFolder other = (MailboxFolder) obj;<a name="line.177"></a>
-<FONT color="green">178</FONT>            if (name == null) {<a name="line.178"></a>
-<FONT color="green">179</FONT>                if (other.name != null) {<a name="line.179"></a>
-<FONT color="green">180</FONT>                    return false;<a name="line.180"></a>
-<FONT color="green">181</FONT>                }<a name="line.181"></a>
-<FONT color="green">182</FONT>            } else if (!name.equals(other.name)) {<a name="line.182"></a>
-<FONT color="green">183</FONT>                return false;<a name="line.183"></a>
-<FONT color="green">184</FONT>            }<a name="line.184"></a>
-<FONT color="green">185</FONT>            if (parent == null) {<a name="line.185"></a>
-<FONT color="green">186</FONT>                if (other.parent != null) {<a name="line.186"></a>
-<FONT color="green">187</FONT>                    return false;<a name="line.187"></a>
-<FONT color="green">188</FONT>                }<a name="line.188"></a>
-<FONT color="green">189</FONT>            } else if (!parent.equals(other.parent)) {<a name="line.189"></a>
-<FONT color="green">190</FONT>                return false;<a name="line.190"></a>
-<FONT color="green">191</FONT>            }<a name="line.191"></a>
-<FONT color="green">192</FONT>            return true;<a name="line.192"></a>
+<FONT color="green">156</FONT>            if (name == null || name.trim().equals("") || name.equalsIgnoreCase("inbox") || checkSeparator<a name="line.156"></a>
+<FONT color="green">157</FONT>                    &amp;&amp; name.contains(String.valueOf(SEPARATOR))) {<a name="line.157"></a>
+<FONT color="green">158</FONT>                throw new IllegalArgumentException("name '" + name + "' is not valid");<a name="line.158"></a>
+<FONT color="green">159</FONT>            }<a name="line.159"></a>
+<FONT color="green">160</FONT>        }<a name="line.160"></a>
+<FONT color="green">161</FONT>    <a name="line.161"></a>
+<FONT color="green">162</FONT>        public synchronized MailboxFolder create() {<a name="line.162"></a>
+<FONT color="green">163</FONT>            if (isExists()) {<a name="line.163"></a>
+<FONT color="green">164</FONT>                throw new IllegalStateException("already exists");<a name="line.164"></a>
+<FONT color="green">165</FONT>            }<a name="line.165"></a>
+<FONT color="green">166</FONT>            checkFolderName(this.name);<a name="line.166"></a>
+<FONT color="green">167</FONT>    <a name="line.167"></a>
+<FONT color="green">168</FONT>            exists = true;<a name="line.168"></a>
+<FONT color="green">169</FONT>    <a name="line.169"></a>
+<FONT color="green">170</FONT>            // TODO set parent and/or children to exists?<a name="line.170"></a>
+<FONT color="green">171</FONT>    <a name="line.171"></a>
+<FONT color="green">172</FONT>            if (parent != null &amp;&amp; !parent.isExists()) {<a name="line.172"></a>
+<FONT color="green">173</FONT>                parent.create();<a name="line.173"></a>
+<FONT color="green">174</FONT>            }<a name="line.174"></a>
+<FONT color="green">175</FONT>    <a name="line.175"></a>
+<FONT color="green">176</FONT>            /*children.clear();<a name="line.176"></a>
+<FONT color="green">177</FONT>    <a name="line.177"></a>
+<FONT color="green">178</FONT>            if (parent != null) {<a name="line.178"></a>
+<FONT color="green">179</FONT>                parent.children.add(this);<a name="line.179"></a>
+<FONT color="green">180</FONT>            }<a name="line.180"></a>
+<FONT color="green">181</FONT>    <a name="line.181"></a>
+<FONT color="green">182</FONT>            if (mailboxEventListener != null) {<a name="line.182"></a>
+<FONT color="green">183</FONT>                mailboxEventListener.folderCreated(this);<a name="line.183"></a>
+<FONT color="green">184</FONT>            }*/<a name="line.184"></a>
+<FONT color="green">185</FONT>    <a name="line.185"></a>
+<FONT color="green">186</FONT>            for (final MailboxEventListener mailboxEventListener : mailboxEventListeners) {<a name="line.186"></a>
+<FONT color="green">187</FONT>                mailboxEventListener.folderCreated(this);<a name="line.187"></a>
+<FONT color="green">188</FONT>            }<a name="line.188"></a>
+<FONT color="green">189</FONT>    <a name="line.189"></a>
+<FONT color="green">190</FONT>            logger.debug("Folder " + this.getFullName() + " created");<a name="line.190"></a>
+<FONT color="green">191</FONT>            return this;<a name="line.191"></a>
+<FONT color="green">192</FONT>    <a name="line.192"></a>
 <FONT color="green">193</FONT>        }<a name="line.193"></a>
 <FONT color="green">194</FONT>    <a name="line.194"></a>
-<FONT color="green">195</FONT>        public synchronized Message[] expunge() throws MessagingException {<a name="line.195"></a>
+<FONT color="green">195</FONT>        public synchronized void deleteFolder(final boolean recurse) {<a name="line.195"></a>
 <FONT color="green">196</FONT>            checkExists();<a name="line.196"></a>
-<FONT color="green">197</FONT>            final List&lt;Message&gt; expunged = new ArrayList&lt;Message&gt;();<a name="line.197"></a>
-<FONT color="green">198</FONT>            for (final Message msg : getByFlags(new Flags(Flag.DELETED), true)) {<a name="line.198"></a>
-<FONT color="green">199</FONT>    <a name="line.199"></a>
-<FONT color="green">200</FONT>                expunged.add(messages.remove(((MockMessage) msg).getMockid()));<a name="line.200"></a>
-<FONT color="green">201</FONT>                ((MockMessage) msg).setExpunged(true);<a name="line.201"></a>
+<FONT color="green">197</FONT>            checkFolderName(this.name);<a name="line.197"></a>
+<FONT color="green">198</FONT>    <a name="line.198"></a>
+<FONT color="green">199</FONT>            if (isRoot()) {<a name="line.199"></a>
+<FONT color="green">200</FONT>                throw new IllegalArgumentException("root cannot be deleted");<a name="line.200"></a>
+<FONT color="green">201</FONT>            }<a name="line.201"></a>
 <FONT color="green">202</FONT>    <a name="line.202"></a>
-<FONT color="green">203</FONT>                for (final MailboxEventListener mailboxEventListener : mailboxEventListeners) {<a name="line.203"></a>
-<FONT color="green">204</FONT>                    mailboxEventListener.messageExpunged(this, (MockMessage) msg, true);<a name="line.204"></a>
-<FONT color="green">205</FONT>                }<a name="line.205"></a>
-<FONT color="green">206</FONT>            }<a name="line.206"></a>
-<FONT color="green">207</FONT>    <a name="line.207"></a>
-<FONT color="green">208</FONT>            logger.debug(expunged.size() + " messages expunged (deleted) from" + getFullName());<a name="line.208"></a>
-<FONT color="green">209</FONT>            return expunged.toArray(new Message[expunged.size()]);<a name="line.209"></a>
-<FONT color="green">210</FONT>    <a name="line.210"></a>
-<FONT color="green">211</FONT>        }<a name="line.211"></a>
-<FONT color="green">212</FONT>    <a name="line.212"></a>
-<FONT color="green">213</FONT>        public synchronized Message[] expunge(final Message[] msgs) throws MessagingException {<a name="line.213"></a>
-<FONT color="green">214</FONT>            checkExists();<a name="line.214"></a>
-<FONT color="green">215</FONT>            final List&lt;Long&gt; toExpunge = new ArrayList&lt;Long&gt;();<a name="line.215"></a>
-<FONT color="green">216</FONT>    <a name="line.216"></a>
-<FONT color="green">217</FONT>            for (final Message msg : msgs) {<a name="line.217"></a>
-<FONT color="green">218</FONT>                toExpunge.add(((MockMessage) msg).getMockid());<a name="line.218"></a>
-<FONT color="green">219</FONT>            }<a name="line.219"></a>
-<FONT color="green">220</FONT>    <a name="line.220"></a>
-<FONT color="green">221</FONT>            final List&lt;Message&gt; expunged = new ArrayList&lt;Message&gt;();<a name="line.221"></a>
-<FONT color="green">222</FONT>            for (final Message msg : getByFlags(new Flags(Flag.DELETED), true)) {<a name="line.222"></a>
-<FONT color="green">223</FONT>    <a name="line.223"></a>
-<FONT color="green">224</FONT>                if (!toExpunge.contains(new Long(((MockMessage) msg).getMockid()))) {<a name="line.224"></a>
-<FONT color="green">225</FONT>                    continue;<a name="line.225"></a>
-<FONT color="green">226</FONT>                }<a name="line.226"></a>
-<FONT color="green">227</FONT>    <a name="line.227"></a>
-<FONT color="green">228</FONT>                expunged.add(messages.remove(((MockMessage) msg).getMockid()));<a name="line.228"></a>
-<FONT color="green">229</FONT>                ((MockMessage) msg).setExpunged(true);<a name="line.229"></a>
-<FONT color="green">230</FONT>    <a name="line.230"></a>
-<FONT color="green">231</FONT>                for (final MailboxEventListener mailboxEventListener : mailboxEventListeners) {<a name="line.231"></a>
-<FONT color="green">232</FONT>                    mailboxEventListener.messageExpunged(this, (MockMessage) msg, true);<a name="line.232"></a>
-<FONT color="green">233</FONT>                }<a name="line.233"></a>
-<FONT color="green">234</FONT>            }<a name="line.234"></a>
-<FONT color="green">235</FONT>    <a name="line.235"></a>
-<FONT color="green">236</FONT>            logger.debug(expunged.size() + " messages expunged (deleted) from " + getFullName());<a name="line.236"></a>
-<FONT color="green">237</FONT>            return expunged.toArray(new Message[expunged.size()]);<a name="line.237"></a>
-<FONT color="green">238</FONT>    <a name="line.238"></a>
-<FONT color="green">239</FONT>        }<a name="line.239"></a>
-<FONT color="green">240</FONT>    <a name="line.240"></a>
-<FONT color="green">241</FONT>        public synchronized Message[] getByFlags(final Flags flags, final boolean mustSet /*final Folder folder*/) throws MessagingException {<a name="line.241"></a>
-<FONT color="green">242</FONT>            checkExists();<a name="line.242"></a>
-<FONT color="green">243</FONT>            final List&lt;MockMessage&gt; sms = new ArrayList&lt;MockMessage&gt;();<a name="line.243"></a>
-<FONT color="green">244</FONT>            int num = 0;<a name="line.244"></a>
-<FONT color="green">245</FONT>    <a name="line.245"></a>
-<FONT color="green">246</FONT>            for (final MockMessage mockMessage : new TreeSet&lt;MockMessage&gt;(messages.values())) {<a name="line.246"></a>
-<FONT color="green">247</FONT>    <a name="line.247"></a>
-<FONT color="green">248</FONT>                if (mustSet &amp;&amp; mockMessage.getFlags().contains(flags) || !mustSet &amp;&amp; !mockMessage.getFlags().contains(flags)) {<a name="line.248"></a>
-<FONT color="green">249</FONT>                    mockMessage.setMessageNumber(++num);<a name="line.249"></a>
-<FONT color="green">250</FONT>                    // mockMessage.setFolder(folder);<a name="line.250"></a>
-<FONT color="green">251</FONT>                    sms.add(mockMessage);<a name="line.251"></a>
-<FONT color="green">252</FONT>                }<a name="line.252"></a>
-<FONT color="green">253</FONT>    <a name="line.253"></a>
-<FONT color="green">254</FONT>            }<a name="line.254"></a>
-<FONT color="green">255</FONT>            logger.debug("getByFlags() for " + getFullName() + " returns " + sms.size());<a name="line.255"></a>
-<FONT color="green">256</FONT>            return sms.toArray(new Message[sms.size()]);<a name="line.256"></a>
-<FONT color="green">257</FONT>        }<a name="line.257"></a>
+<FONT color="green">203</FONT>            messages.clear();<a name="line.203"></a>
+<FONT color="green">204</FONT>            // unread.clear();<a name="line.204"></a>
+<FONT color="green">205</FONT>    <a name="line.205"></a>
+<FONT color="green">206</FONT>            if (recurse) {<a name="line.206"></a>
+<FONT color="green">207</FONT>                for (final MailboxFolder mf : getChildren()) {<a name="line.207"></a>
+<FONT color="green">208</FONT>                    mf.deleteFolder(recurse);<a name="line.208"></a>
+<FONT color="green">209</FONT>                }<a name="line.209"></a>
+<FONT color="green">210</FONT>            }<a name="line.210"></a>
+<FONT color="green">211</FONT>    <a name="line.211"></a>
+<FONT color="green">212</FONT>            parent.children.remove(this);<a name="line.212"></a>
+<FONT color="green">213</FONT>            this.exists = false;<a name="line.213"></a>
+<FONT color="green">214</FONT>    <a name="line.214"></a>
+<FONT color="green">215</FONT>            for (final MailboxEventListener mailboxEventListener : mailboxEventListeners) {<a name="line.215"></a>
+<FONT color="green">216</FONT>                mailboxEventListener.folderDeleted(this);<a name="line.216"></a>
+<FONT color="green">217</FONT>            }<a name="line.217"></a>
+<FONT color="green">218</FONT>            logger.debug("Folder " + this.getFullName() + " deleted");<a name="line.218"></a>
+<FONT color="green">219</FONT>    <a name="line.219"></a>
+<FONT color="green">220</FONT>        }<a name="line.220"></a>
+<FONT color="green">221</FONT>    <a name="line.221"></a>
+<FONT color="green">222</FONT>        @Override<a name="line.222"></a>
+<FONT color="green">223</FONT>        public boolean equals(final Object obj) {<a name="line.223"></a>
+<FONT color="green">224</FONT>            if (this == obj) {<a name="line.224"></a>
+<FONT color="green">225</FONT>                return true;<a name="line.225"></a>
+<FONT color="green">226</FONT>            }<a name="line.226"></a>
+<FONT color="green">227</FONT>            if (obj == null) {<a name="line.227"></a>
+<FONT color="green">228</FONT>                return false;<a name="line.228"></a>
+<FONT color="green">229</FONT>            }<a name="line.229"></a>
+<FONT color="green">230</FONT>            if (getClass() != obj.getClass()) {<a name="line.230"></a>
+<FONT color="green">231</FONT>                return false;<a name="line.231"></a>
+<FONT color="green">232</FONT>            }<a name="line.232"></a>
+<FONT color="green">233</FONT>            final MailboxFolder other = (MailboxFolder) obj;<a name="line.233"></a>
+<FONT color="green">234</FONT>            if (name == null) {<a name="line.234"></a>
+<FONT color="green">235</FONT>                if (other.name != null) {<a name="line.235"></a>
+<FONT color="green">236</FONT>                    return false;<a name="line.236"></a>
+<FONT color="green">237</FONT>                }<a name="line.237"></a>
+<FONT color="green">238</FONT>            } else if (!name.equals(other.name)) {<a name="line.238"></a>
+<FONT color="green">239</FONT>                return false;<a name="line.239"></a>
+<FONT color="green">240</FONT>            }<a name="line.240"></a>
+<FONT color="green">241</FONT>            if (parent == null) {<a name="line.241"></a>
+<FONT color="green">242</FONT>                if (other.parent != null) {<a name="line.242"></a>
+<FONT color="green">243</FONT>                    return false;<a name="line.243"></a>
+<FONT color="green">244</FONT>                }<a name="line.244"></a>
+<FONT color="green">245</FONT>            } else if (!parent.equals(other.parent)) {<a name="line.245"></a>
+<FONT color="green">246</FONT>                return false;<a name="line.246"></a>
+<FONT color="green">247</FONT>            }<a name="line.247"></a>
+<FONT color="green">248</FONT>            return true;<a name="line.248"></a>
+<FONT color="green">249</FONT>        }<a name="line.249"></a>
+<FONT color="green">250</FONT>    <a name="line.250"></a>
+<FONT color="green">251</FONT>        public synchronized Message[] expunge() throws MessagingException {<a name="line.251"></a>
+<FONT color="green">252</FONT>            checkExists();<a name="line.252"></a>
+<FONT color="green">253</FONT>            final List&lt;Message&gt; expunged = new ArrayList&lt;Message&gt;();<a name="line.253"></a>
+<FONT color="green">254</FONT>            for (final Message msg : getByFlags(new Flags(Flag.DELETED), true)) {<a name="line.254"></a>
+<FONT color="green">255</FONT>    <a name="line.255"></a>
+<FONT color="green">256</FONT>                expunged.add(messages.remove(((MockMessage) msg).getMockid()));<a name="line.256"></a>
+<FONT color="green">257</FONT>                ((MockMessage) msg).setExpunged(true);<a name="line.257"></a>
 <FONT color="green">258</FONT>    <a name="line.258"></a>
-<FONT color="green">259</FONT>        public synchronized Message getById(final long id /*final Folder folder*/) {<a name="line.259"></a>
-<FONT color="green">260</FONT>            checkExists();<a name="line.260"></a>
-<FONT color="green">261</FONT>            final Message m = messages.get(id);<a name="line.261"></a>
-<FONT color="green">262</FONT>    <a name="line.262"></a>
-<FONT color="green">263</FONT>            if (m == null) {<a name="line.263"></a>
-<FONT color="green">264</FONT>    <a name="line.264"></a>
-<FONT color="green">265</FONT>                logger.debug("No message with id " + id + ", return null");<a name="line.265"></a>
-<FONT color="green">266</FONT>                return null;<a name="line.266"></a>
-<FONT color="green">267</FONT>    <a name="line.267"></a>
-<FONT color="green">268</FONT>            }<a name="line.268"></a>
-<FONT color="green">269</FONT>    <a name="line.269"></a>
-<FONT color="green">270</FONT>            // ((MockMessage) m).setFolder(folder);<a name="line.270"></a>
-<FONT color="green">271</FONT>            logger.debug("getById(" + id + ") for " + getFullName() + " returns successful");<a name="line.271"></a>
+<FONT color="green">259</FONT>                for (final MailboxEventListener mailboxEventListener : mailboxEventListeners) {<a name="line.259"></a>
+<FONT color="green">260</FONT>                    mailboxEventListener.messageExpunged(this, (MockMessage) msg, true);<a name="line.260"></a>
+<FONT color="green">261</FONT>                }<a name="line.261"></a>
+<FONT color="green">262</FONT>            }<a name="line.262"></a>
+<FONT color="green">263</FONT>    <a name="line.263"></a>
+<FONT color="green">264</FONT>            logger.debug(expunged.size() + " messages expunged (deleted) from" + getFullName());<a name="line.264"></a>
+<FONT color="green">265</FONT>            return expunged.toArray(new Message[expunged.size()]);<a name="line.265"></a>
+<FONT color="green">266</FONT>    <a name="line.266"></a>
+<FONT color="green">267</FONT>        }<a name="line.267"></a>
+<FONT color="green">268</FONT>    <a name="line.268"></a>
+<FONT color="green">269</FONT>        public synchronized Message[] expunge(final Message[] msgs) throws MessagingException {<a name="line.269"></a>
+<FONT color="green">270</FONT>            checkExists();<a name="line.270"></a>
+<FONT color="green">271</FONT>            final List&lt;Long&gt; toExpunge = new ArrayList&lt;Long&gt;();<a name="line.271"></a>
 <FONT color="green">272</FONT>    <a name="line.272"></a>
-<FONT color="green">273</FONT>            return m;<a name="line.273"></a>
-<FONT color="green">274</FONT>        }<a name="line.274"></a>
-<FONT color="green">275</FONT>    <a name="line.275"></a>
-<FONT color="green">276</FONT>        public synchronized Message[] getByIds(final long start, final long end/* final Folder folder*/) {<a name="line.276"></a>
-<FONT color="green">277</FONT>            checkExists();<a name="line.277"></a>
-<FONT color="green">278</FONT>            final List&lt;MockMessage&gt; sms = new ArrayList&lt;MockMessage&gt;();<a name="line.278"></a>
-<FONT color="green">279</FONT>            int num = 0;<a name="line.279"></a>
-<FONT color="green">280</FONT>    <a name="line.280"></a>
-<FONT color="green">281</FONT>            MockMessage lastMsg = null;<a name="line.281"></a>
-<FONT color="green">282</FONT>    <a name="line.282"></a>
-<FONT color="green">283</FONT>            for (final MockMessage mockMessage : new TreeSet&lt;MockMessage&gt;(messages.values())) {<a name="line.283"></a>
-<FONT color="green">284</FONT>    <a name="line.284"></a>
-<FONT color="green">285</FONT>                lastMsg = mockMessage;<a name="line.285"></a>
+<FONT color="green">273</FONT>            for (final Message msg : msgs) {<a name="line.273"></a>
+<FONT color="green">274</FONT>                toExpunge.add(((MockMessage) msg).getMockid());<a name="line.274"></a>
+<FONT color="green">275</FONT>            }<a name="line.275"></a>
+<FONT color="green">276</FONT>    <a name="line.276"></a>
+<FONT color="green">277</FONT>            final List&lt;Message&gt; expunged = new ArrayList&lt;Message&gt;();<a name="line.277"></a>
+<FONT color="green">278</FONT>            for (final Message msg : getByFlags(new Flags(Flag.DELETED), true)) {<a name="line.278"></a>
+<FONT color="green">279</FONT>    <a name="line.279"></a>
+<FONT color="green">280</FONT>                if (!toExpunge.contains(new Long(((MockMessage) msg).getMockid()))) {<a name="line.280"></a>
+<FONT color="green">281</FONT>                    continue;<a name="line.281"></a>
+<FONT color="green">282</FONT>                }<a name="line.282"></a>
+<FONT color="green">283</FONT>    <a name="line.283"></a>
+<FONT color="green">284</FONT>                expunged.add(messages.remove(((MockMessage) msg).getMockid()));<a name="line.284"></a>
+<FONT color="green">285</FONT>                ((MockMessage) msg).setExpunged(true);<a name="line.285"></a>
 <FONT color="green">286</FONT>    <a name="line.286"></a>
-<FONT color="green">287</FONT>                if (end == UIDFolder.LASTUID) {<a name="line.287"></a>
-<FONT color="green">288</FONT>                    if (getMessageCount() != 1 &amp;&amp; mockMessage.getMockid() &lt; start) { // TODO<a name="line.288"></a>
-<FONT color="green">289</FONT>                                                                                     // check?<a name="line.289"></a>
-<FONT color="green">290</FONT>                        continue;<a name="line.290"></a>
-<FONT color="green">291</FONT>                    }<a name="line.291"></a>
-<FONT color="green">292</FONT>                } else {<a name="line.292"></a>
-<FONT color="green">293</FONT>                    if (mockMessage.getMockid() &lt; start || mockMessage.getMockid() &gt; end) {<a name="line.293"></a>
-<FONT color="green">294</FONT>                        continue;<a name="line.294"></a>
-<FONT color="green">295</FONT>                    }<a name="line.295"></a>
-<FONT color="green">296</FONT>                }<a name="line.296"></a>
-<FONT color="green">297</FONT>    <a name="line.297"></a>
-<FONT color="green">298</FONT>                mockMessage.setMessageNumber(++num);<a name="line.298"></a>
-<FONT color="green">299</FONT>                // mockMessage.setFolder(folder);<a name="line.299"></a>
-<FONT color="green">300</FONT>                sms.add(mockMessage);<a name="line.300"></a>
-<FONT color="green">301</FONT>            }<a name="line.301"></a>
-<FONT color="green">302</FONT>    <a name="line.302"></a>
-<FONT color="green">303</FONT>            if (end == UIDFolder.LASTUID &amp;&amp; sms.size() == 0) {<a name="line.303"></a>
-<FONT color="green">304</FONT>                lastMsg.setMessageNumber(++num);<a name="line.304"></a>
-<FONT color="green">305</FONT>                // lastMsg.setFolder(folder);<a name="line.305"></a>
-<FONT color="green">306</FONT>                sms.add(lastMsg);<a name="line.306"></a>
-<FONT color="green">307</FONT>            }<a name="line.307"></a>
-<FONT color="green">308</FONT>    <a name="line.308"></a>
-<FONT color="green">309</FONT>            logger.debug("getByIds(" + start + "," + end + " for " + getFullName() + " returns " + sms.size());<a name="line.309"></a>
-<FONT color="green">310</FONT>            return sms.toArray(new Message[sms.size()]);<a name="line.310"></a>
-<FONT color="green">311</FONT>        }<a name="line.311"></a>
-<FONT color="green">312</FONT>    <a name="line.312"></a>
-<FONT color="green">313</FONT>        public synchronized Message[] getByIds(final long[] id /*final Folder folder*/) {<a name="line.313"></a>
-<FONT color="green">314</FONT>            checkExists();<a name="line.314"></a>
-<FONT color="green">315</FONT>            final List&lt;Long&gt; idlist = new ArrayList&lt;Long&gt;();<a name="line.315"></a>
-<FONT color="green">316</FONT>            for (final long value : id) {<a name="line.316"></a>
-<FONT color="green">317</FONT>                idlist.add(value);<a name="line.317"></a>
-<FONT color="green">318</FONT>            }<a name="line.318"></a>
-<FONT color="green">319</FONT>            final List&lt;MockMessage&gt; sms = new ArrayList&lt;MockMessage&gt;();<a name="line.319"></a>
-<FONT color="green">320</FONT>            int num = 0;<a name="line.320"></a>
-<FONT color="green">321</FONT>    <a name="line.321"></a>
-<FONT color="green">322</FONT>            for (final MockMessage mockMessage : new TreeSet&lt;MockMessage&gt;(messages.values())) {<a name="line.322"></a>
+<FONT color="green">287</FONT>                for (final MailboxEventListener mailboxEventListener : mailboxEventListeners) {<a name="line.287"></a>
+<FONT color="green">288</FONT>                    mailboxEventListener.messageExpunged(this, (MockMessage) msg, true);<a name="line.288"></a>
+<FONT color="green">289</FONT>                }<a name="line.289"></a>
+<FONT color="green">290</FONT>            }<a name="line.290"></a>
+<FONT color="green">291</FONT>    <a name="line.291"></a>
+<FONT color="green">292</FONT>            logger.debug(expunged.size() + " messages expunged (deleted) from " + getFullName());<a name="line.292"></a>
+<FONT color="green">293</FONT>            return expunged.toArray(new Message[expunged.size()]);<a name="line.293"></a>
+<FONT color="green">294</FONT>    <a name="line.294"></a>
+<FONT color="green">295</FONT>        }<a name="line.295"></a>
+<FONT color="green">296</FONT>    <a name="line.296"></a>
+<FONT color="green">297</FONT>        public synchronized Message[] getByFlags(final Flags flags, final boolean mustSet /*final Folder folder*/) throws MessagingException {<a name="line.297"></a>
+<FONT color="green">298</FONT>            checkExists();<a name="line.298"></a>
+<FONT color="green">299</FONT>            final List&lt;MockMessage&gt; sms = new ArrayList&lt;MockMessage&gt;();<a name="line.299"></a>
+<FONT color="green">300</FONT>            int num = 0;<a name="line.300"></a>
+<FONT color="green">301</FONT>    <a name="line.301"></a>
+<FONT color="green">302</FONT>            for (final MockMessage mockMessage : new TreeSet&lt;MockMessage&gt;(messages.values())) {<a name="line.302"></a>
+<FONT color="green">303</FONT>    <a name="line.303"></a>
+<FONT color="green">304</FONT>                if (mustSet &amp;&amp; mockMessage.getFlags().contains(flags) || !mustSet &amp;&amp; !mockMessage.getFlags().contains(flags)) {<a name="line.304"></a>
+<FONT color="green">305</FONT>                    mockMessage.setMessageNumber(++num);<a name="line.305"></a>
+<FONT color="green">306</FONT>                    // mockMessage.setFolder(folder);<a name="line.306"></a>
+<FONT color="green">307</FONT>                    sms.add(mockMessage);<a name="line.307"></a>
+<FONT color="green">308</FONT>                }<a name="line.308"></a>
+<FONT color="green">309</FONT>    <a name="line.309"></a>
+<FONT color="green">310</FONT>            }<a name="line.310"></a>
+<FONT color="green">311</FONT>            logger.debug("getByFlags() for " + getFullName() + " returns " + sms.size());<a name="line.311"></a>
+<FONT color="green">312</FONT>            return sms.toArray(new Message[sms.size()]);<a name="line.312"></a>
+<FONT color="green">313</FONT>        }<a name="line.313"></a>
+<FONT color="green">314</FONT>    <a name="line.314"></a>
+<FONT color="green">315</FONT>        public synchronized Message getById(final long id /*final Folder folder*/) {<a name="line.315"></a>
+<FONT color="green">316</FONT>            checkExists();<a name="line.316"></a>
+<FONT color="green">317</FONT>            final Message m = messages.get(id);<a name="line.317"></a>
+<FONT color="green">318</FONT>    <a name="line.318"></a>
+<FONT color="green">319</FONT>            if (m == null) {<a name="line.319"></a>
+<FONT color="green">320</FONT>    <a name="line.320"></a>
+<FONT color="green">321</FONT>                logger.debug("No message with id " + id + ", return null");<a name="line.321"></a>
+<FONT color="green">322</FONT>                return null;<a name="line.322"></a>
 <FONT color="green">323</FONT>    <a name="line.323"></a>
-<FONT color="green">324</FONT>                if (!idlist.contains(mockMessage.getMockid())) {<a name="line.324"></a>
-<FONT color="green">325</FONT>                    continue;<a name="line.325"></a>
-<FONT color="green">326</FONT>                }<a name="line.326"></a>
-<FONT color="green">327</FONT>    <a name="line.327"></a>
-<FONT color="green">328</FONT>                mockMessage.setMessageNumber(++num);<a name="line.328"></a>
-<FONT color="green">329</FONT>                // mockMessage.setFolder(folder);<a name="line.329"></a>
-<FONT color="green">330</FONT>                sms.add(mockMessage);<a name="line.330"></a>
-<FONT color="green">331</FONT>            }<a name="line.331"></a>
-<FONT color="green">332</FONT>    <a name="line.332"></a>
-<FONT color="green">333</FONT>            logger.debug("getByIds(" + Arrays.toString(id) + ") for " + getFullName() + " returns " + sms.size());<a name="line.333"></a>
-<FONT color="green">334</FONT>            return sms.toArray(new Message[sms.size()]);<a name="line.334"></a>
-<FONT color="green">335</FONT>        }<a name="line.335"></a>
-<FONT color="green">336</FONT>    <a name="line.336"></a>
-<FONT color="green">337</FONT>        // private List&lt;Message&gt; unread = new ArrayList&lt;Message&gt;();<a name="line.337"></a>
+<FONT color="green">324</FONT>            }<a name="line.324"></a>
+<FONT color="green">325</FONT>    <a name="line.325"></a>
+<FONT color="green">326</FONT>            // ((MockMessage) m).setFolder(folder);<a name="line.326"></a>
+<FONT color="green">327</FONT>            logger.debug("getById(" + id + ") for " + getFullName() + " returns successful");<a name="line.327"></a>
+<FONT color="green">328</FONT>    <a name="line.328"></a>
+<FONT color="green">329</FONT>            return m;<a name="line.329"></a>
+<FONT color="green">330</FONT>        }<a name="line.330"></a>
+<FONT color="green">331</FONT>    <a name="line.331"></a>
+<FONT color="green">332</FONT>        // private List&lt;Message&gt; unread = new ArrayList&lt;Message&gt;();<a name="line.332"></a>
+<FONT color="green">333</FONT>    <a name="line.333"></a>
+<FONT color="green">334</FONT>        public synchronized Message[] getByIds(final long start, final long end/* final Folder folder*/) {<a name="line.334"></a>
+<FONT color="green">335</FONT>            checkExists();<a name="line.335"></a>
+<FONT color="green">336</FONT>            final List&lt;MockMessage&gt; sms = new ArrayList&lt;MockMessage&gt;();<a name="line.336"></a>
+<FONT color="green">337</FONT>            int num = 0;<a name="line.337"></a>
 <FONT color="green">338</FONT>    <a name="line.338"></a>
-<FONT color="green">339</FONT>        public synchronized Message getByMsgNum(final int msgnum/*, final Folder folder*/) {<a name="line.339"></a>
-<FONT color="green">340</FONT>            checkExists();<a name="line.340"></a>
-<FONT color="green">341</FONT>            final List&lt;MockMessage&gt; sms = new ArrayList&lt;MockMessage&gt;();<a name="line.341"></a>
+<FONT color="green">339</FONT>            MockMessage lastMsg = null;<a name="line.339"></a>
+<FONT color="green">340</FONT>    <a name="line.340"></a>
+<FONT color="green">341</FONT>            for (final MockMessage mockMessage : new TreeSet&lt;MockMessage&gt;(messages.values())) {<a name="line.341"></a>
 <FONT color="green">342</FONT>    <a name="line.342"></a>
-<FONT color="green">343</FONT>            int num = 0;<a name="line.343"></a>
+<FONT color="green">343</FONT>                lastMsg = mockMessage;<a name="line.343"></a>
 <FONT color="green">344</FONT>    <a name="line.344"></a>
-<FONT color="green">345</FONT>            for (final MockMessage mockMessage : new TreeSet&lt;MockMessage&gt;(messages.values())) {<a name="line.345"></a>
-<FONT color="green">346</FONT>    <a name="line.346"></a>
-<FONT color="green">347</FONT>                mockMessage.setMessageNumber(++num);<a name="line.347"></a>
-<FONT color="green">348</FONT>                // mockMessage.setFolder(folder);<a name="line.348"></a>
-<FONT color="green">349</FONT>                sms.add(mockMessage);<a name="line.349"></a>
-<FONT color="green">350</FONT>            }<a name="line.350"></a>
-<FONT color="green">351</FONT>    <a name="line.351"></a>
-<FONT color="green">352</FONT>            logger.debug("getByMsgNum(" + msgnum + "), size is " + sms.size());<a name="line.352"></a>
-<FONT color="green">353</FONT>    <a name="line.353"></a>
-<FONT color="green">354</FONT>            if (msgnum - 1 &lt; 0 || msgnum &gt; sms.size()) {<a name="line.354"></a>
-<FONT color="green">355</FONT>                throw new ArrayIndexOutOfBoundsException("message number (" + msgnum + ") out of bounds (" + sms.size() + ") for "<a name="line.355"></a>
-<FONT color="green">356</FONT>                        + getFullName());<a name="line.356"></a>
-<FONT color="green">357</FONT>            }<a name="line.357"></a>
-<FONT color="green">358</FONT>    <a name="line.358"></a>
-<FONT color="green">359</FONT>            final Message m = sms.get(msgnum - 1);<a name="line.359"></a>
-<FONT color="green">360</FONT>            return m;<a name="line.360"></a>
-<FONT color="green">361</FONT>        }<a name="line.361"></a>
-<FONT color="green">362</FONT>    <a name="line.362"></a>
-<FONT color="green">363</FONT>        /**<a name="line.363"></a>
-<FONT color="green">364</FONT>         * <a name="line.364"></a>
-<FONT color="green">365</FONT>         * @return Unmodifieable new list copy<a name="line.365"></a>
-<FONT color="green">366</FONT>         */<a name="line.366"></a>
-<FONT color="green">367</FONT>        public synchronized List&lt;MailboxFolder&gt; getChildren() {<a name="line.367"></a>
-<FONT color="green">368</FONT>            checkExists();<a name="line.368"></a>
-<FONT color="green">369</FONT>            return Collections.unmodifiableList(new ArrayList&lt;MailboxFolder&gt;(children));<a name="line.369"></a>
-<FONT color="green">370</FONT>        }<a name="line.370"></a>
-<FONT color="green">371</FONT>    <a name="line.371"></a>
-<FONT color="green">372</FONT>        public synchronized String getFullName() {<a name="line.372"></a>
-<FONT color="green">373</FONT>            // checkExists();<a name="line.373"></a>
-<FONT color="green">374</FONT>            if (isRoot()) {<a name="line.374"></a>
-<FONT color="green">375</FONT>                return "";<a name="line.375"></a>
+<FONT color="green">345</FONT>                if (end == UIDFolder.LASTUID) {<a name="line.345"></a>
+<FONT color="green">346</FONT>                    if (getMessageCount() != 1 &amp;&amp; mockMessage.getMockid() &lt; start) { // TODO<a name="line.346"></a>
+<FONT color="green">347</FONT>                                                                                     // check?<a name="line.347"></a>
+<FONT color="green">348</FONT>                        continue;<a name="line.348"></a>
+<FONT color="green">349</FONT>                    }<a name="line.349"></a>
+<FONT color="green">350</FONT>                } else {<a name="line.350"></a>
+<FONT color="green">351</FONT>                    if (mockMessage.getMockid() &lt; start || mockMessage.getMockid() &gt; end) {<a name="line.351"></a>
+<FONT color="green">352</FONT>                        continue;<a name="line.352"></a>
+<FONT color="green">353</FONT>                    }<a name="line.353"></a>
+<FONT color="green">354</FONT>                }<a name="line.354"></a>
+<FONT color="green">355</FONT>    <a name="line.355"></a>
+<FONT color="green">356</FONT>                mockMessage.setMessageNumber(++num);<a name="line.356"></a>
+<FONT color="green">357</FONT>                // mockMessage.setFolder(folder);<a name="line.357"></a>
+<FONT color="green">358</FONT>                sms.add(mockMessage);<a name="line.358"></a>
+<FONT color="green">359</FONT>            }<a name="line.359"></a>
+<FONT color="green">360</FONT>    <a name="line.360"></a>
+<FONT color="green">361</FONT>            if (end == UIDFolder.LASTUID &amp;&amp; sms.size() == 0) {<a name="line.361"></a>
+<FONT color="green">362</FONT>                lastMsg.setMessageNumber(++num);<a name="line.362"></a>
+<FONT color="green">363</FONT>                // lastMsg.setFolder(folder);<a name="line.363"></a>
+<FONT color="green">364</FONT>                sms.add(lastMsg);<a name="line.364"></a>
+<FONT color="green">365</FONT>            }<a name="line.365"></a>
+<FONT color="green">366</FONT>    <a name="line.366"></a>
+<FONT color="green">367</FONT>            logger.debug("getByIds(" + start + "," + end + " for " + getFullName() + " returns " + sms.size());<a name="line.367"></a>
+<FONT color="green">368</FONT>            return sms.toArray(new Message[sms.size()]);<a name="line.368"></a>
+<FONT color="green">369</FONT>        }<a name="line.369"></a>
+<FONT color="green">370</FONT>    <a name="line.370"></a>
+<FONT color="green">371</FONT>        public synchronized Message[] getByIds(final long[] id /*final Folder folder*/) {<a name="line.371"></a>
+<FONT color="green">372</FONT>            checkExists();<a name="line.372"></a>
+<FONT color="green">373</FONT>            final List&lt;Long&gt; idlist = new ArrayList&lt;Long&gt;();<a name="line.373"></a>
+<FONT color="green">374</FONT>            for (final long value : id) {<a name="line.374"></a>
+<FONT color="green">375</FONT>                idlist.add(value);<a name="line.375"></a>
 <FONT color="green">376</FONT>            }<a name="line.376"></a>
-<FONT color="green">377</FONT>    <a name="line.377"></a>
-<FONT color="green">378</FONT>            return parent.isRoot() ? name : parent.getFullName() + SEPARATOR + name;<a name="line.378"></a>
+<FONT color="green">377</FONT>            final List&lt;MockMessage&gt; sms = new ArrayList&lt;MockMessage&gt;();<a name="line.377"></a>
+<FONT color="green">378</FONT>            int num = 0;<a name="line.378"></a>
 <FONT color="green">379</FONT>    <a name="line.379"></a>
-<FONT color="green">380</FONT>        }<a name="line.380"></a>
+<FONT color="green">380</FONT>            for (final MockMessage mockMessage : new TreeSet&lt;MockMessage&gt;(messages.values())) {<a name="line.380"></a>
 <FONT color="green">381</FONT>    <a name="line.381"></a>
-<FONT color="green">382</FONT>        /**<a name="line.382"></a>
-<FONT color="green">383</FONT>         * @return the mailbox<a name="line.383"></a>
-<FONT color="green">384</FONT>         */<a name="line.384"></a>
-<FONT color="green">385</FONT>        public MockMailbox getMailbox() {<a name="line.385"></a>
-<FONT color="green">386</FONT>            return mailbox;<a name="line.386"></a>
-<FONT color="green">387</FONT>        }<a name="line.387"></a>
-<FONT color="green">388</FONT>    <a name="line.388"></a>
-<FONT color="green">389</FONT>        public synchronized int getMessageCount() {<a name="line.389"></a>
-<FONT color="green">390</FONT>            checkExists();<a name="line.390"></a>
-<FONT color="green">391</FONT>            logger.debug("getMessageCount() for " + getFullName() + " returns " + messages.size());<a name="line.391"></a>
-<FONT color="green">392</FONT>            return messages.size();<a name="line.392"></a>
+<FONT color="green">382</FONT>                if (!idlist.contains(mockMessage.getMockid())) {<a name="line.382"></a>
+<FONT color="green">383</FONT>                    continue;<a name="line.383"></a>
+<FONT color="green">384</FONT>                }<a name="line.384"></a>
+<FONT color="green">385</FONT>    <a name="line.385"></a>
+<FONT color="green">386</FONT>                mockMessage.setMessageNumber(++num);<a name="line.386"></a>
+<FONT color="green">387</FONT>                // mockMessage.setFolder(folder);<a name="line.387"></a>
+<FONT color="green">388</FONT>                sms.add(mockMessage);<a name="line.388"></a>
+<FONT color="green">389</FONT>            }<a name="line.389"></a>
+<FONT color="green">390</FONT>    <a name="line.390"></a>
+<FONT color="green">391</FONT>            logger.debug("getByIds(" + Arrays.toString(id) + ") for " + getFullName() + " returns " + sms.size());<a name="line.391"></a>
+<FONT color="green">392</FONT>            return sms.toArray(new Message[sms.size()]);<a name="line.392"></a>
 <FONT color="green">393</FONT>        }<a name="line.393"></a>
 <FONT color="green">394</FONT>    <a name="line.394"></a>
-<FONT color="green">395</FONT>        public synchronized Message[] getMessages(/*final Folder folder*/) {<a name="line.395"></a>
+<FONT color="green">395</FONT>        public synchronized Message getByMsgNum(final int msgnum/*, final Folder folder*/) {<a name="line.395"></a>
 <FONT color="green">396</FONT>            checkExists();<a name="line.396"></a>
 <FONT color="green">397</FONT>            final List&lt;MockMessage&gt; sms = new ArrayList&lt;MockMessage&gt;();<a name="line.397"></a>
-<FONT color="green">398</FONT>            int num = 0;<a name="line.398"></a>
-<FONT color="green">399</FONT>    <a name="line.399"></a>
-<FONT color="green">400</FONT>            for (final MockMessage mockMessage : new TreeSet&lt;MockMessage&gt;(messages.values())) {<a name="line.400"></a>
-<FONT color="green">401</FONT>    <a name="line.401"></a>
-<FONT color="green">402</FONT>                mockMessage.setMessageNumber(++num);<a name="line.402"></a>
-<FONT color="green">403</FONT>                // mockMessage.setFolder(folder);<a name="line.403"></a>
-<FONT color="green">404</FONT>                sms.add(mockMessage);<a name="line.404"></a>
-<FONT color="green">405</FONT>            }<a name="line.405"></a>
-<FONT color="green">406</FONT>            logger.debug("getMessages() for " + getFullName() + " returns " + sms.size());<a name="line.406"></a>
-<FONT color="green">407</FONT>            return sms.toArray(new Message[sms.size()]);<a name="line.407"></a>
-<FONT color="green">408</FONT>        }<a name="line.408"></a>
+<FONT color="green">398</FONT>    <a name="line.398"></a>
+<FONT color="green">399</FONT>            int num = 0;<a name="line.399"></a>
+<FONT color="green">400</FONT>    <a name="line.400"></a>
+<FONT color="green">401</FONT>            for (final MockMessage mockMessage : new TreeSet&lt;MockMessage&gt;(messages.values())) {<a name="line.401"></a>
+<FONT color="green">402</FONT>    <a name="line.402"></a>
+<FONT color="green">403</FONT>                mockMessage.setMessageNumber(++num);<a name="line.403"></a>
+<FONT color="green">404</FONT>                // mockMessage.setFolder(folder);<a name="line.404"></a>
+<FONT color="green">405</FONT>                sms.add(mockMessage);<a name="line.405"></a>
+<FONT color="green">406</FONT>            }<a name="line.406"></a>
+<FONT color="green">407</FONT>    <a name="line.407"></a>
+<FONT color="green">408</FONT>            logger.debug("getByMsgNum(" + msgnum + "), size is " + sms.size());<a name="line.408"></a>
 <FONT color="green">409</FONT>    <a name="line.409"></a>
-<FONT color="green">410</FONT>        public String getName() {<a name="line.410"></a>
-<FONT color="green">411</FONT>            return name;<a name="line.411"></a>
-<FONT color="green">412</FONT>        }<a name="line.412"></a>
-<FONT color="green">413</FONT>    <a name="line.413"></a>
-<FONT color="green">414</FONT>        public MailboxFolder getOrAddSubFolder(final String name) throws MessagingException {<a name="line.414"></a>
-<FONT color="green">415</FONT>            // checkExists();<a name="line.415"></a>
-<FONT color="green">416</FONT>    <a name="line.416"></a>
-<FONT color="green">417</FONT>            if (name == null || "".equals(name.trim())) {<a name="line.417"></a>
-<FONT color="green">418</FONT>                throw new MessagingException("cannot get or add root folder");<a name="line.418"></a>
-<FONT color="green">419</FONT>            }<a name="line.419"></a>
-<FONT color="green">420</FONT>    <a name="line.420"></a>
-<FONT color="green">421</FONT>            logger.debug("getOrAddSubFolder(" + name + ") on " + getFullName());<a name="line.421"></a>
-<FONT color="green">422</FONT>    <a name="line.422"></a>
-<FONT color="green">423</FONT>            final String[] path = name.split(String.valueOf(SEPARATOR));<a name="line.423"></a>
-<FONT color="green">424</FONT>    <a name="line.424"></a>
-<FONT color="green">425</FONT>            MailboxFolder last = this;<a name="line.425"></a>
-<FONT color="green">426</FONT>            for (int i = 0; i &lt; path.length; i++) {<a name="line.426"></a>
+<FONT color="green">410</FONT>            if (msgnum - 1 &lt; 0 || msgnum &gt; sms.size()) {<a name="line.410"></a>
+<FONT color="green">411</FONT>                throw new ArrayIndexOutOfBoundsException("message number (" + msgnum + ") out of bounds (" + sms.size() + ") for "<a name="line.411"></a>
+<FONT color="green">412</FONT>                        + getFullName());<a name="line.412"></a>
+<FONT color="green">413</FONT>            }<a name="line.413"></a>
+<FONT color="green">414</FONT>    <a name="line.414"></a>
+<FONT color="green">415</FONT>            final Message m = sms.get(msgnum - 1);<a name="line.415"></a>
+<FONT color="green">416</FONT>            return m;<a name="line.416"></a>
+<FONT color="green">417</FONT>        }<a name="line.417"></a>
+<FONT color="green">418</FONT>    <a name="line.418"></a>
+<FONT color="green">419</FONT>        /**<a name="line.419"></a>
+<FONT color="green">420</FONT>         * <a name="line.420"></a>
+<FONT color="green">421</FONT>         * @return Unmodifieable new list copy<a name="line.421"></a>
+<FONT color="green">422</FONT>         */<a name="line.422"></a>
+<FONT color="green">423</FONT>        public synchronized List&lt;MailboxFolder&gt; getChildren() {<a name="line.423"></a>
+<FONT color="green">424</FONT>            checkExists();<a name="line.424"></a>
+<FONT color="green">425</FONT>            return Collections.unmodifiableList(new ArrayList&lt;MailboxFolder&gt;(children));<a name="line.425"></a>
+<FONT color="green">426</FONT>        }<a name="line.426"></a>
 <FONT color="green">427</FONT>    <a name="line.427"></a>
-<FONT color="green">428</FONT>                final String element = path[i];<a name="line.428"></a>
-<FONT color="green">429</FONT>    <a name="line.429"></a>
-<FONT color="green">430</FONT>                if ("inbox".equalsIgnoreCase(element)) {<a name="line.430"></a>
-<FONT color="green">431</FONT>                    last = mailbox.getInbox();<a name="line.431"></a>
-<FONT color="green">432</FONT>                } else {<a name="line.432"></a>
-<FONT color="green">433</FONT>                    checkFolderName(element);<a name="line.433"></a>
-<FONT color="green">434</FONT>                    final MailboxFolder mbt = new MailboxFolder(element, mailbox, false);<a name="line.434"></a>
-<FONT color="green">435</FONT>                    mbt.parent = last;<a name="line.435"></a>
-<FONT color="green">436</FONT>    <a name="line.436"></a>
-<FONT color="green">437</FONT>                    int index = -1;<a name="line.437"></a>
-<FONT color="green">438</FONT>                    if ((index = last.children.indexOf(mbt)) != -1) {<a name="line.438"></a>
-<FONT color="green">439</FONT>    <a name="line.439"></a>
-<FONT color="green">440</FONT>                        final MailboxFolder tmp = last.children.get(index);<a name="line.440"></a>
-<FONT color="green">441</FONT>                        if (tmp.isExists()) {<a name="line.441"></a>
-<FONT color="green">442</FONT>                            last = tmp;<a name="line.442"></a>
-<FONT color="green">443</FONT>                            continue;<a name="line.443"></a>
-<FONT color="green">444</FONT>                        }<a name="line.444"></a>
-<FONT color="green">445</FONT>                    }<a name="line.445"></a>
-<FONT color="green">446</FONT>    <a name="line.446"></a>
-<FONT color="green">447</FONT>                    last.children.add(mbt);<a name="line.447"></a>
-<FONT color="green">448</FONT>    <a name="line.448"></a>
-<FONT color="green">449</FONT>                    logger.debug("Subfolder " + mbt.getFullName() + " added");<a name="line.449"></a>
-<FONT color="green">450</FONT>                    last = mbt;<a name="line.450"></a>
-<FONT color="green">451</FONT>                }<a name="line.451"></a>
-<FONT color="green">452</FONT>    <a name="line.452"></a>
-<FONT color="green">453</FONT>            }<a name="line.453"></a>
-<FONT color="green">454</FONT>    <a name="line.454"></a>
-<FONT color="green">455</FONT>            return last;<a name="line.455"></a>
-<FONT color="green">456</FONT>    <a name="line.456"></a>
-<FONT color="green">457</FONT>        }<a name="line.457"></a>
-<FONT color="green">458</FONT>    <a name="line.458"></a>
-<FONT color="green">459</FONT>        public synchronized MailboxFolder getParent() {<a name="line.459"></a>
-<FONT color="green">460</FONT>            checkExists();<a name="line.460"></a>
-<FONT color="green">461</FONT>            return parent;<a name="line.461"></a>
-<FONT color="green">462</FONT>        }<a name="line.462"></a>
-<FONT color="green">463</FONT>    <a name="line.463"></a>
-<FONT color="green">464</FONT>        public synchronized int getSizeInBytes() throws MessagingException {<a name="line.464"></a>
-<FONT color="green">465</FONT>            checkExists();<a name="line.465"></a>
-<FONT color="green">466</FONT>            int size = 0;<a name="line.466"></a>
-<FONT color="green">467</FONT>    <a name="line.467"></a>
-<FONT color="green">468</FONT>            for (final MockMessage mockMessage : new TreeSet&lt;MockMessage&gt;(messages.values())) {<a name="line.468"></a>
+<FONT color="green">428</FONT>        public synchronized String getFullName() {<a name="line.428"></a>
+<FONT color="green">429</FONT>            // checkExists();<a name="line.429"></a>
+<FONT color="green">430</FONT>            if (isRoot()) {<a name="line.430"></a>
+<FONT color="green">431</FONT>                return "";<a name="line.431"></a>
+<FONT color="green">432</FONT>            }<a name="line.432"></a>
+<FONT color="green">433</FONT>    <a name="line.433"></a>
+<FONT color="green">434</FONT>            return parent.isRoot() ? name : parent.getFullName() + SEPARATOR + name;<a name="line.434"></a>
+<FONT color="green">435</FONT>    <a name="line.435"></a>
+<FONT color="green">436</FONT>        }<a name="line.436"></a>
+<FONT color="green">437</FONT>    <a name="line.437"></a>
+<FONT color="green">438</FONT>        /**<a name="line.438"></a>
+<FONT color="green">439</FONT>         * @return the mailbox<a name="line.439"></a>
+<FONT color="green">440</FONT>         */<a name="line.440"></a>
+<FONT color="green">441</FONT>        public MockMailbox getMailbox() {<a name="line.441"></a>
+<FONT color="green">442</FONT>            return mailbox;<a name="line.442"></a>
+<FONT color="green">443</FONT>        }<a name="line.443"></a>
+<FONT color="green">444</FONT>    <a name="line.444"></a>
+<FONT color="green">445</FONT>        public synchronized int getMessageCount() {<a name="line.445"></a>
+<FONT color="green">446</FONT>            checkExists();<a name="line.446"></a>
+<FONT color="green">447</FONT>            logger.debug("getMessageCount() for " + getFullName() + " returns " + messages.size());<a name="line.447"></a>
+<FONT color="green">448</FONT>            return messages.size();<a name="line.448"></a>
+<FONT color="green">449</FONT>        }<a name="line.449"></a>
+<FONT color="green">450</FONT>    <a name="line.450"></a>
+<FONT color="green">451</FONT>        public synchronized Message[] getMessages(/*final Folder folder*/) {<a name="line.451"></a>
+<FONT color="green">452</FONT>            checkExists();<a name="line.452"></a>
+<FONT color="green">453</FONT>            final List&lt;MockMessage&gt; sms = new ArrayList&lt;MockMessage&gt;();<a name="line.453"></a>
+<FONT color="green">454</FONT>            int num = 0;<a name="line.454"></a>
+<FONT color="green">455</FONT>    <a name="line.455"></a>
+<FONT color="green">456</FONT>            for (final MockMessage mockMessage : new TreeSet&lt;MockMessage&gt;(messages.values())) {<a name="line.456"></a>
+<FONT color="green">457</FONT>    <a name="line.457"></a>
+<FONT color="green">458</FONT>                mockMessage.setMessageNumber(++num);<a name="line.458"></a>
+<FONT color="green">459</FONT>                // mockMessage.setFolder(folder);<a name="line.459"></a>
+<FONT color="green">460</FONT>                sms.add(mockMessage);<a name="line.460"></a>
+<FONT color="green">461</FONT>            }<a name="line.461"></a>
+<FONT color="green">462</FONT>            logger.debug("getMessages() for " + getFullName() + " returns " + sms.size());<a name="line.462"></a>
+<FONT color="green">463</FONT>            return sms.toArray(new Message[sms.size()]);<a name="line.463"></a>
+<FONT color="green">464</FONT>        }<a name="line.464"></a>
+<FONT color="green">465</FONT>    <a name="line.465"></a>
+<FONT color="green">466</FONT>        public String getName() {<a name="line.466"></a>
+<FONT color="green">467</FONT>            return name;<a name="line.467"></a>
+<FONT color="green">468</FONT>        }<a name="line.468"></a>
 <FONT color="green">469</FONT>    <a name="line.469"></a>
-<FONT color="green">470</FONT>                if (mockMessage.getSize() &gt; 0) {<a name="line.470"></a>
-<FONT color="green">471</FONT>                    size += mockMessage.getSize();<a name="line.471"></a>
-<FONT color="green">472</FONT>                }<a name="line.472"></a>
-<FONT color="green">473</FONT>    <a name="line.473"></a>
-<FONT color="green">474</FONT>            }<a name="line.474"></a>
-<FONT color="green">475</FONT>    <a name="line.475"></a>
-<FONT color="green">476</FONT>            return size;<a name="line.476"></a>
-<FONT color="green">477</FONT>        }<a name="line.477"></a>
+<FONT color="green">470</FONT>        public MailboxFolder getOrAddSubFolder(final String name) throws MessagingException {<a name="line.470"></a>
+<FONT color="green">471</FONT>            // checkExists();<a name="line.471"></a>
+<FONT color="green">472</FONT>    <a name="line.472"></a>
+<FONT color="green">473</FONT>            if (name == null || "".equals(name.trim())) {<a name="line.473"></a>
+<FONT color="green">474</FONT>                throw new MessagingException("cannot get or add root folder");<a name="line.474"></a>
+<FONT color="green">475</FONT>            }<a name="line.475"></a>
+<FONT color="green">476</FONT>    <a name="line.476"></a>
+<FONT color="green">477</FONT>            logger.debug("getOrAddSubFolder(" + name + ") on " + getFullName());<a name="line.477"></a>
 <FONT color="green">478</FONT>    <a name="line.478"></a>
-<FONT color="green">479</FONT>        public synchronized long getUID(final Message msg) {<a name="line.479"></a>
-<FONT color="green">480</FONT>            checkExists();<a name="line.480"></a>
-<FONT color="green">481</FONT>            return ((MockMessage) msg).getMockid();<a name="line.481"></a>
-<FONT color="green">482</FONT>        }<a name="line.482"></a>
+<FONT color="green">479</FONT>            final String[] path = name.split(String.valueOf(SEPARATOR));<a name="line.479"></a>
+<FONT color="green">480</FONT>    <a name="line.480"></a>
+<FONT color="green">481</FONT>            MailboxFolder last = this;<a name="line.481"></a>
+<FONT color="green">482</FONT>            for (int i = 0; i &lt; path.length; i++) {<a name="line.482"></a>
 <FONT color="green">483</FONT>    <a name="line.483"></a>
-<FONT color="green">484</FONT>        /**<a name="line.484"></a>
-<FONT color="green">485</FONT>         * @return the uidValidity<a name="line.485"></a>
-<FONT color="green">486</FONT>         */<a name="line.486"></a>
-<FONT color="green">487</FONT>        public synchronized long getUidValidity() {<a name="line.487"></a>
-<FONT color="green">488</FONT>            checkExists();<a name="line.488"></a>
-<FONT color="green">489</FONT>            return uidValidity;<a name="line.489"></a>
-<FONT color="green">490</FONT>        }<a name="line.490"></a>
-<FONT color="green">491</FONT>    <a name="line.491"></a>
-<FONT color="green">492</FONT>        @Override<a name="line.492"></a>
-<FONT color="green">493</FONT>        public int hashCode() {<a name="line.493"></a>
-<FONT color="green">494</FONT>            final int prime = 31;<a name="line.494"></a>
-<FONT color="green">495</FONT>            int result = 1;<a name="line.495"></a>
-<FONT color="green">496</FONT>            result = prime * result + (name == null ? 0 : name.hashCode());<a name="line.496"></a>
-<FONT color="green">497</FONT>            result = prime * result + (parent == null ? 0 : parent.hashCode());<a name="line.497"></a>
-<FONT color="green">498</FONT>            return result;<a name="line.498"></a>
-<FONT color="green">499</FONT>        }<a name="line.499"></a>
-<FONT color="green">500</FONT>    <a name="line.500"></a>
-<FONT color="green">501</FONT>        public synchronized boolean hasMessages() {<a name="line.501"></a>
-<FONT color="green">502</FONT>            checkExists();<a name="line.502"></a>
-<FONT color="green">503</FONT>            return messages.isEmpty();<a name="line.503"></a>
-<FONT color="green">504</FONT>        }<a name="line.504"></a>
-<FONT color="green">505</FONT>    <a name="line.505"></a>
-<FONT color="green">506</FONT>        public synchronized void invalidateUid() {<a name="line.506"></a>
-<FONT color="green">507</FONT>            checkExists();<a name="line.507"></a>
-<FONT color="green">508</FONT>            uidValidity += 10;<a name="line.508"></a>
-<FONT color="green">509</FONT>    <a name="line.509"></a>
-<FONT color="green">510</FONT>            for (final MailboxEventListener mailboxEventListener : mailboxEventListeners) {<a name="line.510"></a>
-<FONT color="green">511</FONT>                mailboxEventListener.uidInvalidated();<a name="line.511"></a>
-<FONT color="green">512</FONT>            }<a name="line.512"></a>
-<FONT color="green">513</FONT>            logger.debug("UidValidity invalidated, new UidValidity is " + uidValidity);<a name="line.513"></a>
-<FONT color="green">514</FONT>        }<a name="line.514"></a>
-<FONT color="green">515</FONT>    <a name="line.515"></a>
-<FONT color="green">516</FONT>        /**<a name="line.516"></a>
-<FONT color="green">517</FONT>         * @return the exists<a name="line.517"></a>
-<FONT color="green">518</FONT>         */<a name="line.518"></a>
-<FONT color="green">519</FONT>        public boolean isExists() {<a name="line.519"></a>
-<FONT color="green">520</FONT>            return exists;<a name="line.520"></a>
-<FONT color="green">521</FONT>        }<a name="line.521"></a>
-<FONT color="green">522</FONT>    <a name="line.522"></a>
-<FONT color="green">523</FONT>        public boolean isInbox() {<a name="line.523"></a>
-<FONT color="green">524</FONT>            return name != null &amp;&amp; name.equalsIgnoreCase("inbox");<a name="line.524"></a>
-<FONT color="green">525</FONT>        }<a name="line.525"></a>
-<FONT color="green">526</FONT>    <a name="line.526"></a>
-<FONT color="green">527</FONT>        public boolean isRoot() {<a name="line.527"></a>
-<FONT color="green">528</FONT>            return name == null || name.equals("") || parent == null;<a name="line.528"></a>
-<FONT color="green">529</FONT>        }<a name="line.529"></a>
-<FONT color="green">530</FONT>    <a name="line.530"></a>
-<FONT color="green">531</FONT>        /**<a name="line.531"></a>
-<FONT color="green">532</FONT>         * @return the simulateError<a name="line.532"></a>
-<FONT color="green">533</FONT>         */<a name="line.533"></a>
-<FONT color="green">534</FONT>        public boolean isSimulateError() {<a name="line.534"></a>
-<FONT color="green">535</FONT>            return simulateError;<a name="line.535"></a>
-<FONT color="green">536</FONT>        }<a name="line.536"></a>
-<FONT color="green">537</FONT>    <a name="line.537"></a>
-<FONT color="green">538</FONT>        public synchronized void markMessageAsDeleted(final Message e) throws MessagingException {<a name="line.538"></a>
-<FONT color="green">539</FONT>            checkExists();<a name="line.539"></a>
-<FONT color="green">540</FONT>            ((MockMessage) e).setFlag(Flag.DELETED, true);<a name="line.540"></a>
-<FONT color="green">541</FONT>            // if(mailboxEventListener!=null)<a name="line.541"></a>
-<FONT color="green">542</FONT>            // mailboxEventListener.messageRemoved(this, ((MockMessage)e), false);<a name="line.542"></a>
-<FONT color="green">543</FONT>            logger.debug("Mark message " + ((MockMessage) e).getMockid() + " as deleted (Flag DELETED set)");<a name="line.543"></a>
-<FONT color="green">544</FONT>        }<a name="line.544"></a>
-<FONT color="green">545</FONT>    <a name="line.545"></a>
-<FONT color="green">546</FONT>        public synchronized void markMessageAsSeen(final Message e) throws MessagingException {<a name="line.546"></a>
-<FONT color="green">547</FONT>            checkExists();<a name="line.547"></a>
-<FONT color="green">548</FONT>            ((MockMessage) e).setFlag(Flag.SEEN, true);<a name="line.548"></a>
-<FONT color="green">549</FONT>            // if(mailboxEventListener!=null)<a name="line.549"></a>
-<FONT color="green">550</FONT>            // mailboxEventListener.messageRemoved(this, ((MockMessage)e), false);<a name="line.550"></a>
-<FONT color="green">551</FONT>            logger.debug("Mark message " + ((MockMessage) e).getMockid() + " as seen (Flag SEEN set)");<a name="line.551"></a>
-<FONT color="green">552</FONT>        }<a name="line.552"></a>
-<FONT color="green">553</FONT>    <a name="line.553"></a>
-<FONT color="green">554</FONT>        @Override<a name="line.554"></a>
-<FONT color="green">555</FONT>        public void onFlagChange(final MockMessage msg, final Flags flags, final boolean set) {<a name="line.555"></a>
-<FONT color="green">556</FONT>    <a name="line.556"></a>
-<FONT color="green">557</FONT>            for (final MailboxEventListener mailboxEventListener : mailboxEventListeners) {<a name="line.557"></a>
-<FONT color="green">558</FONT>                mailboxEventListener.messageChanged(this, msg, false, true);<a name="line.558"></a>
-<FONT color="green">559</FONT>            }<a name="line.559"></a>
-<FONT color="green">560</FONT>    <a name="line.560"></a>
-<FONT color="green">561</FONT>            logger.debug("Flags of message " + msg.getMockid() + " change");<a name="line.561"></a>
-<FONT color="green">562</FONT>    <a name="line.562"></a>
-<FONT color="green">563</FONT>            if (messages.size() &gt; 0 &amp;&amp; messages.get(msg.getMockid()) != null) {<a name="line.563"></a>
-<FONT color="green">564</FONT>                try {<a name="line.564"></a>
-<FONT color="green">565</FONT>                    if (set &amp;&amp; messages.get(msg.getMockid()).getFlags().contains(flags)) {<a name="line.565"></a>
-<FONT color="green">566</FONT>                        return;<a name="line.566"></a>
-<FONT color="green">567</FONT>    <a name="line.567"></a>
-<FONT color="green">568</FONT>                    }<a name="line.568"></a>
-<FONT color="green">569</FONT>    <a name="line.569"></a>
-<FONT color="green">570</FONT>                    if (set &amp;&amp; !messages.get(msg.getMockid()).getFlags().contains(flags)) {<a name="line.570"></a>
-<FONT color="green">571</FONT>                        messages.get(msg.getMockid()).setFlags(flags, set);<a name="line.571"></a>
+<FONT color="green">484</FONT>                final String element = path[i];<a name="line.484"></a>
+<FONT color="green">485</FONT>    <a name="line.485"></a>
+<FONT color="green">486</FONT>                if ("inbox".equalsIgnoreCase(element)) {<a name="line.486"></a>
+<FONT color="green">487</FONT>                    last = mailbox.getInbox();<a name="line.487"></a>
+<FONT color="green">488</FONT>                } else {<a name="line.488"></a>
+<FONT color="green">489</FONT>                    checkFolderName(element);<a name="line.489"></a>
+<FONT color="green">490</FONT>                    final MailboxFolder mbt = new MailboxFolder(element, mailbox, false);<a name="line.490"></a>
+<FONT color="green">491</FONT>                    mbt.parent = last;<a name="line.491"></a>
+<FONT color="green">492</FONT>    <a name="line.492"></a>
+<FONT color="green">493</FONT>                    int index = -1;<a name="line.493"></a>
+<FONT color="green">494</FONT>                    if ((index = last.children.indexOf(mbt)) != -1) {<a name="line.494"></a>
+<FONT color="green">495</FONT>    <a name="line.495"></a>
+<FONT color="green">496</FONT>                        final MailboxFolder tmp = last.children.get(index);<a name="line.496"></a>
+<FONT color="green">497</FONT>                        if (tmp.isExists()) {<a name="line.497"></a>
+<FONT color="green">498</FONT>                            last = tmp;<a name="line.498"></a>
+<FONT color="green">499</FONT>                            continue;<a name="line.499"></a>
+<FONT color="green">500</FONT>                        }<a name="line.500"></a>
+<FONT color="green">501</FONT>                    }<a name="line.501"></a>
+<FONT color="green">502</FONT>    <a name="line.502"></a>
+<FONT color="green">503</FONT>                    last.children.add(mbt);<a name="line.503"></a>
+<FONT color="green">504</FONT>    <a name="line.504"></a>
+<FONT color="green">505</FONT>                    logger.debug("Subfolder " + mbt.getFullName() + " added");<a name="line.505"></a>
+<FONT color="green">506</FONT>                    last = mbt;<a name="line.506"></a>
+<FONT color="green">507</FONT>                }<a name="line.507"></a>
+<FONT color="green">508</FONT>    <a name="line.508"></a>
+<FONT color="green">509</FONT>            }<a name="line.509"></a>
+<FONT color="green">510</FONT>    <a name="line.510"></a>
+<FONT color="green">511</FONT>            return last;<a name="line.511"></a>
+<FONT color="green">512</FONT>    <a name="line.512"></a>
+<FONT color="green">513</FONT>        }<a name="line.513"></a>
+<FONT color="green">514</FONT>    <a name="line.514"></a>
+<FONT color="green">515</FONT>        public synchronized MailboxFolder getParent() {<a name="line.515"></a>
+<FONT color="green">516</FONT>            checkExists();<a name="line.516"></a>
+<FONT color="green">517</FONT>            return parent;<a name="line.517"></a>
+<FONT color="green">518</FONT>        }<a name="line.518"></a>
+<FONT color="green">519</FONT>    <a name="line.519"></a>
+<FONT color="green">520</FONT>        public synchronized int getSizeInBytes() throws MessagingException {<a name="line.520"></a>
+<FONT color="green">521</FONT>            checkExists();<a name="line.521"></a>
+<FONT color="green">522</FONT>            int size = 0;<a name="line.522"></a>
+<FONT color="green">523</FONT>    <a name="line.523"></a>
+<FONT color="green">524</FONT>            for (final MockMessage mockMessage : new TreeSet&lt;MockMessage&gt;(messages.values())) {<a name="line.524"></a>
+<FONT color="green">525</FONT>    <a name="line.525"></a>
+<FONT color="green">526</FONT>                if (mockMessage.getSize() &gt; 0) {<a name="line.526"></a>
+<FONT color="green">527</FONT>                    size += mockMessage.getSize();<a name="line.527"></a>
+<FONT color="green">528</FONT>                }<a name="line.528"></a>
+<FONT color="green">529</FONT>    <a name="line.529"></a>
+<FONT color="green">530</FONT>            }<a name="line.530"></a>
+<FONT color="green">531</FONT>    <a name="line.531"></a>
+<FONT color="green">532</FONT>            return size;<a name="line.532"></a>
+<FONT color="green">533</FONT>        }<a name="line.533"></a>
+<FONT color="green">534</FONT>    <a name="line.534"></a>
+<FONT color="green">535</FONT>        public synchronized long getUID(final Message msg) {<a name="line.535"></a>
+<FONT color="green">536</FONT>            checkExists();<a name="line.536"></a>
+<FONT color="green">537</FONT>            return ((MockMessage) msg).getMockid();<a name="line.537"></a>
+<FONT color="green">538</FONT>        }<a name="line.538"></a>
+<FONT color="green">539</FONT>    <a name="line.539"></a>
+<FONT color="green">540</FONT>        /**<a name="line.540"></a>
+<FONT color="green">541</FONT>         * @return the uidValidity<a name="line.541"></a>
+<FONT color="green">542</FONT>         */<a name="line.542"></a>
+<FONT color="green">543</FONT>        public synchronized long getUidValidity() {<a name="line.543"></a>
+<FONT color="green">544</FONT>            checkExists();<a name="line.544"></a>
+<FONT color="green">545</FONT>            return uidValidity;<a name="line.545"></a>
+<FONT color="green">546</FONT>        }<a name="line.546"></a>
+<FONT color="green">547</FONT>    <a name="line.547"></a>
+<FONT color="green">548</FONT>        /**<a name="line.548"></a>
+<FONT color="green">549</FONT>         * @return the uniqueMessageId<a name="line.549"></a>
+<FONT color="green">550</FONT>         */<a name="line.550"></a>
+<FONT color="green">551</FONT>        protected long getUniqueMessageId() {<a name="line.551"></a>
+<FONT color="green">552</FONT>            return uniqueMessageId;<a name="line.552"></a>
+<FONT color="green">553</FONT>        }<a name="line.553"></a>
+<FONT color="green">554</FONT>    <a name="line.554"></a>
+<FONT color="green">555</FONT>        @Override<a name="line.555"></a>
+<FONT color="green">556</FONT>        public int hashCode() {<a name="line.556"></a>
+<FONT color="green">557</FONT>            final int prime = 31;<a name="line.557"></a>
+<FONT color="green">558</FONT>            int result = 1;<a name="line.558"></a>
+<FONT color="green">559</FONT>            result = prime * result + (name == null ? 0 : name.hashCode());<a name="line.559"></a>
+<FONT color="green">560</FONT>            result = prime * result + (parent == null ? 0 : parent.hashCode());<a name="line.560"></a>
+<FONT color="green">561</FONT>            return result;<a name="line.561"></a>
+<FONT color="green">562</FONT>        }<a name="line.562"></a>
+<FONT color="green">563</FONT>    <a name="line.563"></a>
+<FONT color="green">564</FONT>        public synchronized boolean hasMessages() {<a name="line.564"></a>
+<FONT color="green">565</FONT>            checkExists();<a name="line.565"></a>
+<FONT color="green">566</FONT>            return messages.isEmpty();<a name="line.566"></a>
+<FONT color="green">567</FONT>        }<a name="line.567"></a>
+<FONT color="green">568</FONT>    <a name="line.568"></a>
+<FONT color="green">569</FONT>        public synchronized void invalidateUid() {<a name="line.569"></a>
+<FONT color="green">570</FONT>            checkExists();<a name="line.570"></a>
+<FONT color="green">571</FONT>            uidValidity += 10;<a name="line.571"></a>
 <FONT color="green">572</FONT>    <a name="line.572"></a>
-<FONT color="green">573</FONT>                    }<a name="line.573"></a>
-<FONT color="green">574</FONT>    <a name="line.574"></a>
-<FONT color="green">575</FONT>                    if (!set &amp;&amp; messages.get(msg.getMockid()).getFlags().contains(flags)) {<a name="line.575"></a>
-<FONT color="green">576</FONT>                        messages.get(msg.getMockid()).setFlags(flags, set);<a name="line.576"></a>
-<FONT color="green">577</FONT>    <a name="line.577"></a>
-<FONT color="green">578</FONT>                    }<a name="line.578"></a>
-<FONT color="green">579</FONT>    <a name="line.579"></a>
-<FONT color="green">580</FONT>                    if (!set &amp;&amp; !messages.get(msg.getMockid()).getFlags().contains(flags)) {<a name="line.580"></a>
-<FONT color="green">581</FONT>                        return;<a name="line.581"></a>
-<FONT color="green">582</FONT>    <a name="line.582"></a>
-<FONT color="green">583</FONT>                    }<a name="line.583"></a>
-<FONT color="green">584</FONT>                } catch (final Exception e) {<a name="line.584"></a>
-<FONT color="green">585</FONT>                    logger.error("Error while changing flags " + e.toString(), e);<a name="line.585"></a>
-<FONT color="green">586</FONT>                }<a name="line.586"></a>
-<FONT color="green">587</FONT>            }<a name="line.587"></a>
-<FONT color="green">588</FONT>    <a name="line.588"></a>
-<FONT color="green">589</FONT>        }<a name="line.589"></a>
-<FONT color="green">590</FONT>    <a name="line.590"></a>
-<FONT color="green">591</FONT>        public synchronized void removeMailboxEventListener(final MailboxEventListener l) {<a name="line.591"></a>
-<FONT color="green">592</FONT>            if (l != null) {<a name="line.592"></a>
-<FONT color="green">593</FONT>                mailboxEventListeners.remove(l);<a name="line.593"></a>
-<FONT color="green">594</FONT>            }<a name="line.594"></a>
-<FONT color="green">595</FONT>        }<a name="line.595"></a>
-<FONT color="green">596</FONT>    <a name="line.596"></a>
-<FONT color="green">597</FONT>        public synchronized void renameFolder(final String newName) {<a name="line.597"></a>
-<FONT color="green">598</FONT>            checkExists();<a name="line.598"></a>
-<FONT color="green">599</FONT>            checkFolderName(this.name);<a name="line.599"></a>
-<FONT color="green">600</FONT>            checkFolderName(newName);<a name="line.600"></a>
-<FONT color="green">601</FONT>            final String tmpOldName = name;<a name="line.601"></a>
-<FONT color="green">602</FONT>    <a name="line.602"></a>
-<FONT color="green">603</FONT>            name = newName;<a name="line.603"></a>
+<FONT color="green">573</FONT>            for (final MailboxEventListener mailboxEventListener : mailboxEventListeners) {<a name="line.573"></a>
+<FONT color="green">574</FONT>                mailboxEventListener.uidInvalidated();<a name="line.574"></a>
+<FONT color="green">575</FONT>            }<a name="line.575"></a>
+<FONT color="green">576</FONT>            logger.debug("UidValidity invalidated, new UidValidity is " + uidValidity);<a name="line.576"></a>
+<FONT color="green">577</FONT>        }<a name="line.577"></a>
+<FONT color="green">578</FONT>    <a name="line.578"></a>
+<FONT color="green">579</FONT>        /**<a name="line.579"></a>
+<FONT color="green">580</FONT>         * @return the exists<a name="line.580"></a>
+<FONT color="green">581</FONT>         */<a name="line.581"></a>
+<FONT color="green">582</FONT>        public boolean isExists() {<a name="line.582"></a>
+<FONT color="green">583</FONT>            return exists;<a name="line.583"></a>
+<FONT color="green">584</FONT>        }<a name="line.584"></a>
+<FONT color="green">585</FONT>    <a name="line.585"></a>
+<FONT color="green">586</FONT>        public boolean isInbox() {<a name="line.586"></a>
+<FONT color="green">587</FONT>            return name != null &amp;&amp; name.equalsIgnoreCase("inbox");<a name="line.587"></a>
+<FONT color="green">588</FONT>        }<a name="line.588"></a>
+<FONT color="green">589</FONT>    <a name="line.589"></a>
+<FONT color="green">590</FONT>        public boolean isRoot() {<a name="line.590"></a>
+<FONT color="green">591</FONT>            return name == null || name.equals("") || parent == null;<a name="line.591"></a>
+<FONT color="green">592</FONT>        }<a name="line.592"></a>
+<FONT color="green">593</FONT>    <a name="line.593"></a>
+<FONT color="green">594</FONT>        /**<a name="line.594"></a>
+<FONT color="green">595</FONT>         * @return the simulateError<a name="line.595"></a>
+<FONT color="green">596</FONT>         */<a name="line.596"></a>
+<FONT color="green">597</FONT>        public boolean isSimulateError() {<a name="line.597"></a>
+<FONT color="green">598</FONT>            return simulateError;<a name="line.598"></a>
+<FONT color="green">599</FONT>        }<a name="line.599"></a>
+<FONT color="green">600</FONT>    <a name="line.600"></a>
+<FONT color="green">601</FONT>        protected boolean isSubscribed() {<a name="line.601"></a>
+<FONT color="green">602</FONT>            return subscribed;<a name="line.602"></a>
+<FONT color="green">603</FONT>        }<a name="line.603"></a>
 <FONT color="green">604</FONT>    <a name="line.604"></a>
-<FONT color="green">605</FONT>            for (final MailboxEventListener mailboxEventListener : mailboxEventListeners) {<a name="line.605"></a>
-<FONT color="green">606</FONT>                mailboxEventListener.folderRenamed(tmpOldName, this);<a name="line.606"></a>
-<FONT color="green">607</FONT>            }<a name="line.607"></a>
-<FONT color="green">608</FONT>    <a name="line.608"></a>
-<FONT color="green">609</FONT>            // TODO purge old folders, exists =false<a name="line.609"></a>
-<FONT color="green">610</FONT>    <a name="line.610"></a>
-<FONT color="green">611</FONT>            // TODO notify children?<a name="line.611"></a>
-<FONT color="green">612</FONT>            /*for (MailboxFolder mf: children) {<a name="line.612"></a>
-<FONT color="green">613</FONT>                    renameFolder(mf.name); //do not really change name of children, just notify because parent changes<a name="line.613"></a>
-<FONT color="green">614</FONT>            }*/<a name="line.614"></a>
-<FONT color="green">615</FONT>    <a name="line.615"></a>
-<FONT color="green">616</FONT>            logger.debug("Folder " + tmpOldName + " renamed to " + newName + newName + " - New Fullname is " + this.getFullName());<a name="line.616"></a>
-<FONT color="green">617</FONT>    <a name="line.617"></a>
-<FONT color="green">618</FONT>        }<a name="line.618"></a>
-<FONT color="green">619</FONT>    <a name="line.619"></a>
-<FONT color="green">620</FONT>        /**<a name="line.620"></a>
-<FONT color="green">621</FONT>         * @param simulateError<a name="line.621"></a>
-<FONT color="green">622</FONT>         *            the simulateError to set<a name="line.622"></a>
-<FONT color="green">623</FONT>         */<a name="line.623"></a>
-<FONT color="green">624</FONT>        public void setSimulateError(final boolean simulateError) {<a name="line.624"></a>
-<FONT color="green">625</FONT>            this.simulateError = simulateError;<a name="line.625"></a>
-<FONT color="green">626</FONT>        }<a name="line.626"></a>
+<FONT color="green">605</FONT>        public synchronized void markMessageAsDeleted(final Message e) throws MessagingException {<a name="line.605"></a>
+<FONT color="green">606</FONT>            checkExists();<a name="line.606"></a>
+<FONT color="green">607</FONT>            ((MockMessage) e).setFlag(Flag.DELETED, true);<a name="line.607"></a>
+<FONT color="green">608</FONT>            // if(mailboxEventListener!=null)<a name="line.608"></a>
+<FONT color="green">609</FONT>            // mailboxEventListener.messageRemoved(this, ((MockMessage)e), false);<a name="line.609"></a>
+<FONT color="green">610</FONT>            logger.debug("Mark message " + ((MockMessage) e).getMockid() + " as deleted (Flag DELETED set)");<a name="line.610"></a>
+<FONT color="green">611</FONT>        }<a name="line.611"></a>
+<FONT color="green">612</FONT>    <a name="line.612"></a>
+<FONT color="green">613</FONT>        public synchronized void markMessageAsSeen(final Message e) throws MessagingException {<a name="line.613"></a>
+<FONT color="green">614</FONT>            checkExists();<a name="line.614"></a>
+<FONT color="green">615</FONT>            ((MockMessage) e).setFlag(Flag.SEEN, true);<a name="line.615"></a>
+<FONT color="green">616</FONT>            // if(mailboxEventListener!=null)<a name="line.616"></a>
+<FONT color="green">617</FONT>            // mailboxEventListener.messageRemoved(this, ((MockMessage)e), false);<a name="line.617"></a>
+<FONT color="green">618</FONT>            logger.debug("Mark message " + ((MockMessage) e).getMockid() + " as seen (Flag SEEN set)");<a name="line.618"></a>
+<FONT color="green">619</FONT>        }<a name="line.619"></a>
+<FONT color="green">620</FONT>    <a name="line.620"></a>
+<FONT color="green">621</FONT>        @Override<a name="line.621"></a>
+<FONT color="green">622</FONT>        public void onFlagChange(final MockMessage msg, final Flags flags, final boolean set) {<a name="line.622"></a>
+<FONT color="green">623</FONT>    <a name="line.623"></a>
+<FONT color="green">624</FONT>            for (final MailboxEventListener mailboxEventListener : mailboxEventListeners) {<a name="line.624"></a>
+<FONT color="green">625</FONT>                mailboxEventListener.messageChanged(this, msg, false, true);<a name="line.625"></a>
+<FONT color="green">626</FONT>            }<a name="line.626"></a>
 <FONT color="green">627</FONT>    <a name="line.627"></a>
-<FONT color="green">628</FONT>        protected MailboxFolder addSpecialSubFolder(final String name) {<a name="line.628"></a>
-<FONT color="green">629</FONT>            final MailboxFolder mbt = new MailboxFolder(name, mailbox, true);<a name="line.629"></a>
-<FONT color="green">630</FONT>            mbt.parent = this;<a name="line.630"></a>
-<FONT color="green">631</FONT>            children.add(mbt);<a name="line.631"></a>
-<FONT color="green">632</FONT>            return mbt;<a name="line.632"></a>
-<FONT color="green">633</FONT>        }<a name="line.633"></a>
+<FONT color="green">628</FONT>            logger.debug("Flags of message " + msg.getMockid() + " change");<a name="line.628"></a>
+<FONT color="green">629</FONT>    <a name="line.629"></a>
+<FONT color="green">630</FONT>            if (messages.size() &gt; 0 &amp;&amp; messages.get(msg.getMockid()) != null) {<a name="line.630"></a>
+<FONT color="green">631</FONT>                try {<a name="line.631"></a>
+<FONT color="green">632</FONT>                    if (set &amp;&amp; messages.get(msg.getMockid()).getFlags().contains(flags)) {<a name="line.632"></a>
+<FONT color="green">633</FONT>                        return;<a name="line.633"></a>
 <FONT color="green">634</FONT>    <a name="line.634"></a>
-<FONT color="green">635</FONT>        protected void checkExists() {<a name="line.635"></a>
-<FONT color="green">636</FONT>            if (!exists) {<a name="line.636"></a>
-<FONT color="green">637</FONT>                throw new IllegalStateException("folder does not exist");<a name="line.637"></a>
-<FONT color="green">638</FONT>            }<a name="line.638"></a>
-<FONT color="green">639</FONT>        }<a name="line.639"></a>
-<FONT color="green">640</FONT>    <a name="line.640"></a>
-<FONT color="green">641</FONT>        protected void checkFolderName(final String name) {<a name="line.641"></a>
-<FONT color="green">642</FONT>            checkFolderName(name, true);<a name="line.642"></a>
-<FONT color="green">643</FONT>        }<a name="line.643"></a>
+<FONT color="green">635</FONT>                    }<a name="line.635"></a>
+<FONT color="green">636</FONT>    <a name="line.636"></a>
+<FONT color="green">637</FONT>                    if (set &amp;&amp; !messages.get(msg.getMockid()).getFlags().contains(flags)) {<a name="line.637"></a>
+<FONT color="green">638</FONT>                        messages.get(msg.getMockid()).setFlags(flags, set);<a name="line.638"></a>
+<FONT color="green">639</FONT>    <a name="line.639"></a>
+<FONT color="green">640</FONT>                    }<a name="line.640"></a>
+<FONT color="green">641</FONT>    <a name="line.641"></a>
+<FONT color="green">642</FONT>                    if (!set &amp;&amp; messages.get(msg.getMockid()).getFlags().contains(flags)) {<a name="line.642"></a>
+<FONT color="green">643</FONT>                        messages.get(msg.getMockid()).setFlags(flags, set);<a name="line.643"></a>
 <FONT color="green">644</FONT>    <a name="line.644"></a>
-<FONT color="green">645</FONT>        protected void checkFolderName(final String name, final boolean checkSeparator) {<a name="line.645"></a>
-<FONT color="green">646</FONT>            // TODO regex for valid folder names?<a name="line.646"></a>
-<FONT color="green">647</FONT>    <a name="line.647"></a>
-<FONT color="green">648</FONT>            if (name == null || name.trim().equals("") || name.equalsIgnoreCase("inbox") || checkSeparator<a name="line.648"></a>
-<FONT color="green">649</FONT>                    &amp;&amp; name.contains(String.valueOf(SEPARATOR))) {<a name="line.649"></a>
-<FONT color="green">650</FONT>                throw new IllegalArgumentException("name '" + name + "' is not valid");<a name="line.650"></a>
-<FONT color="green">651</FONT>            }<a name="line.651"></a>
-<FONT color="green">652</FONT>        }<a name="line.652"></a>
-<FONT color="green">653</FONT>    <a name="line.653"></a>
-<FONT color="green">654</FONT>        /**<a name="line.654"></a>
-<FONT color="green">655</FONT>         * @return the uniqueMessageId<a name="line.655"></a>
-<FONT color="green">656</FONT>         */<a name="line.656"></a>
-<FONT color="green">657</FONT>        protected long getUniqueMessageId() {<a name="line.657"></a>
-<FONT color="green">658</FONT>            return uniqueMessageId;<a name="line.658"></a>
-<FONT color="green">659</FONT>        }<a name="line.659"></a>
-<FONT color="green">660</FONT>    <a name="line.660"></a>
-<FONT color="green">661</FONT>        public static interface MailboxEventListener {<a name="line.661"></a>
-<FONT color="green">662</FONT>    <a name="line.662"></a>
-<FONT color="green">663</FONT>            void folderCreated(MailboxFolder mf);<a name="line.663"></a>
-<FONT color="green">664</FONT>    <a name="line.664"></a>
-<FONT color="green">665</FONT>            void folderDeleted(MailboxFolder mf);<a name="line.665"></a>
-<FONT color="green">666</FONT>    <a name="line.666"></a>
-<FONT color="green">667</FONT>            void folderRenamed(String from, MailboxFolder to);<a name="line.667"></a>
-<FONT color="green">668</FONT>    <a name="line.668"></a>
-<FONT color="green">669</FONT>            void messageAdded(MailboxFolder mf, MockMessage msg);<a name="line.669"></a>
-<FONT color="green">670</FONT>    <a name="line.670"></a>
-<FONT color="green">671</FONT>            void messageChanged(MailboxFolder mf, MockMessage msg, boolean headerChanged, boolean flagsChanged); // TODO<a name="line.671"></a>
-<FONT color="green">672</FONT>                                                                                                                 // header<a name="line.672"></a>
-<FONT color="green">673</FONT>                                                                                                                 // change<a name="line.673"></a>
-<FONT color="green">674</FONT>                                                                                                                 // can<a name="line.674"></a>
-<FONT color="green">675</FONT>                                                                                                                 // not<a name="line.675"></a>
-<FONT color="green">676</FONT>                                                                                                                 // happen<a name="line.676"></a>
-<FONT color="green">677</FONT>                                                                                                                 // because<a name="line.677"></a>
-<FONT color="green">678</FONT>                                                                                                                 // MockMessage<a name="line.678"></a>
-<FONT color="green">679</FONT>                                                                                                                 // is<a name="line.679"></a>
-<FONT color="green">680</FONT>                                                                                                                 // readonly?<a name="line.680"></a>
-<FONT color="green">681</FONT>    <a name="line.681"></a>
-<FONT color="green">682</FONT>            void messageExpunged(MailboxFolder mf, MockMessage msg, boolean removed);<a name="line.682"></a>
-<FONT color="green">683</FONT>    <a name="line.683"></a>
-<FONT color="green">684</FONT>            void uidInvalidated();<a name="line.684"></a>
-<FONT color="green">685</FONT>    <a name="line.685"></a>
-<FONT color="green">686</FONT>        }<a name="line.686"></a>
-<FONT color="green">687</FONT>    }<a name="line.687"></a>
+<FONT color="green">645</FONT>                    }<a name="line.645"></a>
+<FONT color="green">646</FONT>    <a name="line.646"></a>
+<FONT color="green">647</FONT>                    if (!set &amp;&amp; !messages.get(msg.getMockid()).getFlags().contains(flags)) {<a name="line.647"></a>
+<FONT color="green">648</FONT>                        return;<a name="line.648"></a>
+<FONT color="green">649</FONT>    <a name="line.649"></a>
+<FONT color="green">650</FONT>                    }<a name="line.650"></a>
+<FONT color="green">651</FONT>                } catch (final Exception e) {<a name="line.651"></a>
+<FONT color="green">652</FONT>                    logger.error("Error while changing flags " + e.toString(), e);<a name="line.652"></a>
+<FONT color="green">653</FONT>                }<a name="line.653"></a>
+<FONT color="green">654</FONT>            }<a name="line.654"></a>
+<FONT color="green">655</FONT>    <a name="line.655"></a>
+<FONT color="green">656</FONT>        }<a name="line.656"></a>
+<FONT color="green">657</FONT>    <a name="line.657"></a>
+<FONT color="green">658</FONT>        public synchronized void removeMailboxEventListener(final MailboxEventListener l) {<a name="line.658"></a>
+<FONT color="green">659</FONT>            if (l != null) {<a name="line.659"></a>
+<FONT color="green">660</FONT>                mailboxEventListeners.remove(l);<a name="line.660"></a>
+<FONT color="green">661</FONT>            }<a name="line.661"></a>
+<FONT color="green">662</FONT>        }<a name="line.662"></a>
+<FONT color="green">663</FONT>    <a name="line.663"></a>
+<FONT color="green">664</FONT>        public synchronized void renameFolder(final String newName) {<a name="line.664"></a>
+<FONT color="green">665</FONT>            checkExists();<a name="line.665"></a>
+<FONT color="green">666</FONT>            checkFolderName(this.name);<a name="line.666"></a>
+<FONT color="green">667</FONT>            checkFolderName(newName);<a name="line.667"></a>
+<FONT color="green">668</FONT>            final String tmpOldName = name;<a name="line.668"></a>
+<FONT color="green">669</FONT>    <a name="line.669"></a>
+<FONT color="green">670</FONT>            name = newName;<a name="line.670"></a>
+<FONT color="green">671</FONT>    <a name="line.671"></a>
+<FONT color="green">672</FONT>            for (final MailboxEventListener mailboxEventListener : mailboxEventListeners) {<a name="line.672"></a>
+<FONT color="green">673</FONT>                mailboxEventListener.folderRenamed(tmpOldName, this);<a name="line.673"></a>
+<FONT color="green">674</FONT>            }<a name="line.674"></a>
+<FONT color="green">675</FONT>    <a name="line.675"></a>
+<FONT color="green">676</FONT>            // TODO purge old folders, exists =false<a name="line.676"></a>
+<FONT color="green">677</FONT>    <a name="line.677"></a>
+<FONT color="green">678</FONT>            // TODO notify children?<a name="line.678"></a>
+<FONT color="green">679</FONT>            /*for (MailboxFolder mf: children) {<a name="line.679"></a>
+<FONT color="green">680</FONT>                    renameFolder(mf.name); //do not really change name of children, just notify because parent changes<a name="line.680"></a>
+<FONT color="green">681</FONT>            }*/<a name="line.681"></a>
+<FONT color="green">682</FONT>    <a name="line.682"></a>
+<FONT color="green">683</FONT>            logger.debug("Folder " + tmpOldName + " renamed to " + newName + newName + " - New Fullname is " + this.getFullName());<a name="line.683"></a>
+<FONT color="green">684</FONT>    <a name="line.684"></a>
+<FONT color="green">685</FONT>        }<a name="line.685"></a>
+<FONT color="green">686</FONT>    <a name="line.686"></a>
+<FONT color="green">687</FONT>        public Message[] search(final SearchTerm term, final Message[] msgsToSearch) {<a name="line.687"></a>
+<FONT color="green">688</FONT>            final List&lt;MockMessage&gt; sms = new ArrayList&lt;MockMessage&gt;();<a name="line.688"></a>
+<FONT color="green">689</FONT>            final List&lt;Message&gt; msgsToSearchL = new ArrayList&lt;Message&gt;();<a name="line.689"></a>
+<FONT color="green">690</FONT>    <a name="line.690"></a>
+<FONT color="green">691</FONT>            if (msgsToSearch != null) {<a name="line.691"></a>
+<FONT color="green">692</FONT>                msgsToSearchL.addAll(Arrays.asList(msgsToSearch));<a name="line.692"></a>
+<FONT color="green">693</FONT>            }<a name="line.693"></a>
+<FONT color="green">694</FONT>    <a name="line.694"></a>
+<FONT color="green">695</FONT>            for (final Message msg : getMessages()) {<a name="line.695"></a>
+<FONT color="green">696</FONT>                if (term != null &amp;&amp; term.match(msg)) {<a name="line.696"></a>
+<FONT color="green">697</FONT>    <a name="line.697"></a>
+<FONT color="green">698</FONT>                    if (msgsToSearch == null || msgsToSearchL.contains(msg)) {<a name="line.698"></a>
+<FONT color="green">699</FONT>                        sms.add((MockMessage) msg);<a name="line.699"></a>
+<FONT color="green">700</FONT>                    }<a name="line.700"></a>
+<FONT color="green">701</FONT>                }<a name="line.701"></a>
+<FONT color="green">702</FONT>            }<a name="line.702"></a>
+<FONT color="green">703</FONT>            return sms.toArray(new Message[sms.size()]);<a name="line.703"></a>
+<FONT color="green">704</FONT>        }<a name="line.704"></a>
+<FONT color="green">705</FONT>    <a name="line.705"></a>
+<FONT color="green">706</FONT>        /**<a name="line.706"></a>
+<FONT color="green">707</FONT>         * @param simulateError<a name="line.707"></a>
+<FONT color="green">708</FONT>         *            the simulateError to set<a name="line.708"></a>
+<FONT color="green">709</FONT>         */<a name="line.709"></a>
+<FONT color="green">710</FONT>        public void setSimulateError(final boolean simulateError) {<a name="line.710"></a>
+<FONT color="green">711</FONT>            this.simulateError = simulateError;<a name="line.711"></a>
+<FONT color="green">712</FONT>        }<a name="line.712"></a>
+<FONT color="green">713</FONT>    <a name="line.713"></a>
+<FONT color="green">714</FONT>        protected void setSubscribed(final boolean subscribed) {<a name="line.714"></a>
+<FONT color="green">715</FONT>            this.subscribed = subscribed;<a name="line.715"></a>
+<FONT color="green">716</FONT>        }<a name="line.716"></a>
+<FONT color="green">717</FONT>    }<a name="line.717"></a>
 
 
 

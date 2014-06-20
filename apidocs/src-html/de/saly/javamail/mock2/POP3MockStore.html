@@ -43,9 +43,9 @@
 <FONT color="green">040</FONT>    public class POP3MockStore extends POP3Store {<a name="line.40"></a>
 <FONT color="green">041</FONT>    <a name="line.41"></a>
 <FONT color="green">042</FONT>        private volatile boolean connected;<a name="line.42"></a>
-<FONT color="green">043</FONT>        private MockMailbox mailbox;<a name="line.43"></a>
-<FONT color="green">044</FONT>        private final UUID objectId = UUID.randomUUID();<a name="line.44"></a>
-<FONT color="green">045</FONT>        protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());<a name="line.45"></a>
+<FONT color="green">043</FONT>        protected final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(this.getClass());<a name="line.43"></a>
+<FONT color="green">044</FONT>        private MockMailbox mailbox;<a name="line.44"></a>
+<FONT color="green">045</FONT>        private final UUID objectId = UUID.randomUUID();<a name="line.45"></a>
 <FONT color="green">046</FONT>    <a name="line.46"></a>
 <FONT color="green">047</FONT>        public POP3MockStore(final Session session, final URLName urlname) {<a name="line.47"></a>
 <FONT color="green">048</FONT>            this(session, urlname, "pop3", false);<a name="line.48"></a>
@@ -65,87 +65,87 @@
 <FONT color="green">062</FONT>            return new HashMap();<a name="line.62"></a>
 <FONT color="green">063</FONT>        }<a name="line.63"></a>
 <FONT color="green">064</FONT>    <a name="line.64"></a>
-<FONT color="green">065</FONT>        @Override<a name="line.65"></a>
-<FONT color="green">066</FONT>        public synchronized void close() throws MessagingException {<a name="line.66"></a>
-<FONT color="green">067</FONT>            connected = false;<a name="line.67"></a>
-<FONT color="green">068</FONT>            mailbox = null;<a name="line.68"></a>
-<FONT color="green">069</FONT>            notifyConnectionListeners(ConnectionEvent.CLOSED);<a name="line.69"></a>
-<FONT color="green">070</FONT>            logger.debug("Closed " + objectId);<a name="line.70"></a>
-<FONT color="green">071</FONT>        }<a name="line.71"></a>
-<FONT color="green">072</FONT>    <a name="line.72"></a>
-<FONT color="green">073</FONT>        @Override<a name="line.73"></a>
-<FONT color="green">074</FONT>        public synchronized void connect() throws MessagingException {<a name="line.74"></a>
-<FONT color="green">075</FONT>            if (isConnected()) {<a name="line.75"></a>
-<FONT color="green">076</FONT>                throw new IllegalStateException("already connected");<a name="line.76"></a>
-<FONT color="green">077</FONT>            }<a name="line.77"></a>
-<FONT color="green">078</FONT>            super.connect(url.getHost(), url.getPort(), url.getUsername(), url.getPassword());<a name="line.78"></a>
-<FONT color="green">079</FONT>        }<a name="line.79"></a>
-<FONT color="green">080</FONT>    <a name="line.80"></a>
-<FONT color="green">081</FONT>        @Override<a name="line.81"></a>
-<FONT color="green">082</FONT>        public synchronized void connect(final String user, final String password) throws MessagingException {<a name="line.82"></a>
-<FONT color="green">083</FONT>            if (isConnected()) {<a name="line.83"></a>
-<FONT color="green">084</FONT>                throw new IllegalStateException("already connected");<a name="line.84"></a>
-<FONT color="green">085</FONT>            }<a name="line.85"></a>
-<FONT color="green">086</FONT>            super.connect(url.getHost(), url.getPort(), user, password);<a name="line.86"></a>
-<FONT color="green">087</FONT>        }<a name="line.87"></a>
-<FONT color="green">088</FONT>    <a name="line.88"></a>
-<FONT color="green">089</FONT>        @Override<a name="line.89"></a>
-<FONT color="green">090</FONT>        public synchronized void connect(final String host, final String user, final String password) throws MessagingException {<a name="line.90"></a>
-<FONT color="green">091</FONT>            if (isConnected()) {<a name="line.91"></a>
-<FONT color="green">092</FONT>                throw new IllegalStateException("already connected");<a name="line.92"></a>
-<FONT color="green">093</FONT>            }<a name="line.93"></a>
-<FONT color="green">094</FONT>            super.connect(host, url.getPort(), user, password);<a name="line.94"></a>
-<FONT color="green">095</FONT>        }<a name="line.95"></a>
-<FONT color="green">096</FONT>    <a name="line.96"></a>
-<FONT color="green">097</FONT>        @Override<a name="line.97"></a>
-<FONT color="green">098</FONT>        public synchronized Folder getDefaultFolder() throws MessagingException {<a name="line.98"></a>
-<FONT color="green">099</FONT>            checkConnected();<a name="line.99"></a>
-<FONT color="green">100</FONT>            return super.getDefaultFolder();<a name="line.100"></a>
+<FONT color="green">065</FONT>        protected synchronized void checkConnected() throws MessagingException {<a name="line.65"></a>
+<FONT color="green">066</FONT>            if (!isConnected()) {<a name="line.66"></a>
+<FONT color="green">067</FONT>                throw new MessagingException("Not connected");<a name="line.67"></a>
+<FONT color="green">068</FONT>            }<a name="line.68"></a>
+<FONT color="green">069</FONT>        }<a name="line.69"></a>
+<FONT color="green">070</FONT>    <a name="line.70"></a>
+<FONT color="green">071</FONT>        @Override<a name="line.71"></a>
+<FONT color="green">072</FONT>        public synchronized void close() throws MessagingException {<a name="line.72"></a>
+<FONT color="green">073</FONT>            connected = false;<a name="line.73"></a>
+<FONT color="green">074</FONT>            mailbox = null;<a name="line.74"></a>
+<FONT color="green">075</FONT>            notifyConnectionListeners(ConnectionEvent.CLOSED);<a name="line.75"></a>
+<FONT color="green">076</FONT>            logger.debug("Closed " + objectId);<a name="line.76"></a>
+<FONT color="green">077</FONT>        }<a name="line.77"></a>
+<FONT color="green">078</FONT>    <a name="line.78"></a>
+<FONT color="green">079</FONT>        @Override<a name="line.79"></a>
+<FONT color="green">080</FONT>        public synchronized void connect() throws MessagingException {<a name="line.80"></a>
+<FONT color="green">081</FONT>            if (isConnected()) {<a name="line.81"></a>
+<FONT color="green">082</FONT>                throw new IllegalStateException("already connected");<a name="line.82"></a>
+<FONT color="green">083</FONT>            }<a name="line.83"></a>
+<FONT color="green">084</FONT>            super.connect(url.getHost(), url.getPort(), url.getUsername(), url.getPassword());<a name="line.84"></a>
+<FONT color="green">085</FONT>        }<a name="line.85"></a>
+<FONT color="green">086</FONT>    <a name="line.86"></a>
+<FONT color="green">087</FONT>        @Override<a name="line.87"></a>
+<FONT color="green">088</FONT>        public synchronized void connect(final String user, final String password) throws MessagingException {<a name="line.88"></a>
+<FONT color="green">089</FONT>            if (isConnected()) {<a name="line.89"></a>
+<FONT color="green">090</FONT>                throw new IllegalStateException("already connected");<a name="line.90"></a>
+<FONT color="green">091</FONT>            }<a name="line.91"></a>
+<FONT color="green">092</FONT>            super.connect(url.getHost(), url.getPort(), user, password);<a name="line.92"></a>
+<FONT color="green">093</FONT>        }<a name="line.93"></a>
+<FONT color="green">094</FONT>    <a name="line.94"></a>
+<FONT color="green">095</FONT>        @Override<a name="line.95"></a>
+<FONT color="green">096</FONT>        public synchronized void connect(final String host, final String user, final String password) throws MessagingException {<a name="line.96"></a>
+<FONT color="green">097</FONT>            if (isConnected()) {<a name="line.97"></a>
+<FONT color="green">098</FONT>                throw new IllegalStateException("already connected");<a name="line.98"></a>
+<FONT color="green">099</FONT>            }<a name="line.99"></a>
+<FONT color="green">100</FONT>            super.connect(host, url.getPort(), user, password);<a name="line.100"></a>
 <FONT color="green">101</FONT>        }<a name="line.101"></a>
 <FONT color="green">102</FONT>    <a name="line.102"></a>
 <FONT color="green">103</FONT>        @Override<a name="line.103"></a>
-<FONT color="green">104</FONT>        public synchronized Folder getFolder(final String name) throws MessagingException {<a name="line.104"></a>
+<FONT color="green">104</FONT>        public synchronized Folder getDefaultFolder() throws MessagingException {<a name="line.104"></a>
 <FONT color="green">105</FONT>            checkConnected();<a name="line.105"></a>
-<FONT color="green">106</FONT>            if ("inbox".equalsIgnoreCase(name)) {<a name="line.106"></a>
-<FONT color="green">107</FONT>                return new POP3MockFolder(this, mailbox.getInbox());<a name="line.107"></a>
-<FONT color="green">108</FONT>            }<a name="line.108"></a>
-<FONT color="green">109</FONT>    <a name="line.109"></a>
-<FONT color="green">110</FONT>            return new POP3MockFolder(this, new MailboxFolder(name, mailbox, false));<a name="line.110"></a>
-<FONT color="green">111</FONT>    <a name="line.111"></a>
-<FONT color="green">112</FONT>        }<a name="line.112"></a>
-<FONT color="green">113</FONT>    <a name="line.113"></a>
-<FONT color="green">114</FONT>        @Override<a name="line.114"></a>
-<FONT color="green">115</FONT>        public synchronized Folder getFolder(final URLName url) throws MessagingException {<a name="line.115"></a>
-<FONT color="green">116</FONT>            checkConnected();<a name="line.116"></a>
-<FONT color="green">117</FONT>            return getFolder(url.getFile());<a name="line.117"></a>
+<FONT color="green">106</FONT>            return super.getDefaultFolder();<a name="line.106"></a>
+<FONT color="green">107</FONT>        }<a name="line.107"></a>
+<FONT color="green">108</FONT>    <a name="line.108"></a>
+<FONT color="green">109</FONT>        @Override<a name="line.109"></a>
+<FONT color="green">110</FONT>        public synchronized Folder getFolder(final String name) throws MessagingException {<a name="line.110"></a>
+<FONT color="green">111</FONT>            checkConnected();<a name="line.111"></a>
+<FONT color="green">112</FONT>            if ("inbox".equalsIgnoreCase(name)) {<a name="line.112"></a>
+<FONT color="green">113</FONT>                return new POP3MockFolder(this, mailbox.getInbox());<a name="line.113"></a>
+<FONT color="green">114</FONT>            }<a name="line.114"></a>
+<FONT color="green">115</FONT>    <a name="line.115"></a>
+<FONT color="green">116</FONT>            return new POP3MockFolder(this, new MailboxFolder(name, mailbox, false));<a name="line.116"></a>
+<FONT color="green">117</FONT>    <a name="line.117"></a>
 <FONT color="green">118</FONT>        }<a name="line.118"></a>
 <FONT color="green">119</FONT>    <a name="line.119"></a>
 <FONT color="green">120</FONT>        @Override<a name="line.120"></a>
-<FONT color="green">121</FONT>        public synchronized boolean isConnected() {<a name="line.121"></a>
-<FONT color="green">122</FONT>            return connected;<a name="line.122"></a>
-<FONT color="green">123</FONT>        }<a name="line.123"></a>
-<FONT color="green">124</FONT>    <a name="line.124"></a>
-<FONT color="green">125</FONT>        protected synchronized void checkConnected() throws MessagingException {<a name="line.125"></a>
-<FONT color="green">126</FONT>            if (!isConnected()) {<a name="line.126"></a>
-<FONT color="green">127</FONT>                throw new MessagingException("Not connected");<a name="line.127"></a>
-<FONT color="green">128</FONT>            }<a name="line.128"></a>
-<FONT color="green">129</FONT>        }<a name="line.129"></a>
-<FONT color="green">130</FONT>    <a name="line.130"></a>
-<FONT color="green">131</FONT>        @Override<a name="line.131"></a>
-<FONT color="green">132</FONT>        protected synchronized boolean protocolConnect(final String host, final int port, final String user, final String password)<a name="line.132"></a>
-<FONT color="green">133</FONT>                throws MessagingException {<a name="line.133"></a>
-<FONT color="green">134</FONT>            logger.debug("Connect to " + user + " (" + objectId + ")");<a name="line.134"></a>
-<FONT color="green">135</FONT>            mailbox = MockMailbox.get(user);<a name="line.135"></a>
-<FONT color="green">136</FONT>            // folder = new POP3MockFolder(this, mailbox.getInbox());<a name="line.136"></a>
-<FONT color="green">137</FONT>            if (mailbox.getInbox().isSimulateError()) {<a name="line.137"></a>
-<FONT color="green">138</FONT>                throw new MessagingException("Simulated error connecting to mailbox of " + user);<a name="line.138"></a>
-<FONT color="green">139</FONT>            }<a name="line.139"></a>
-<FONT color="green">140</FONT>            this.connected = true;<a name="line.140"></a>
-<FONT color="green">141</FONT>            return true;<a name="line.141"></a>
-<FONT color="green">142</FONT>        }<a name="line.142"></a>
-<FONT color="green">143</FONT>    <a name="line.143"></a>
-<FONT color="green">144</FONT>        synchronized Session getSession() {<a name="line.144"></a>
-<FONT color="green">145</FONT>            return session;<a name="line.145"></a>
+<FONT color="green">121</FONT>        public synchronized Folder getFolder(final URLName url) throws MessagingException {<a name="line.121"></a>
+<FONT color="green">122</FONT>            checkConnected();<a name="line.122"></a>
+<FONT color="green">123</FONT>            return getFolder(url.getFile());<a name="line.123"></a>
+<FONT color="green">124</FONT>        }<a name="line.124"></a>
+<FONT color="green">125</FONT>    <a name="line.125"></a>
+<FONT color="green">126</FONT>        synchronized Session getSession() {<a name="line.126"></a>
+<FONT color="green">127</FONT>            return session;<a name="line.127"></a>
+<FONT color="green">128</FONT>        }<a name="line.128"></a>
+<FONT color="green">129</FONT>    <a name="line.129"></a>
+<FONT color="green">130</FONT>        @Override<a name="line.130"></a>
+<FONT color="green">131</FONT>        public synchronized boolean isConnected() {<a name="line.131"></a>
+<FONT color="green">132</FONT>            return connected;<a name="line.132"></a>
+<FONT color="green">133</FONT>        }<a name="line.133"></a>
+<FONT color="green">134</FONT>    <a name="line.134"></a>
+<FONT color="green">135</FONT>        @Override<a name="line.135"></a>
+<FONT color="green">136</FONT>        protected synchronized boolean protocolConnect(final String host, final int port, final String user, final String password)<a name="line.136"></a>
+<FONT color="green">137</FONT>                throws MessagingException {<a name="line.137"></a>
+<FONT color="green">138</FONT>            logger.debug("Connect to " + user + " (" + objectId + ")");<a name="line.138"></a>
+<FONT color="green">139</FONT>            mailbox = MockMailbox.get(user);<a name="line.139"></a>
+<FONT color="green">140</FONT>            // folder = new POP3MockFolder(this, mailbox.getInbox());<a name="line.140"></a>
+<FONT color="green">141</FONT>            if (mailbox.getInbox().isSimulateError()) {<a name="line.141"></a>
+<FONT color="green">142</FONT>                throw new MessagingException("Simulated error connecting to mailbox of " + user);<a name="line.142"></a>
+<FONT color="green">143</FONT>            }<a name="line.143"></a>
+<FONT color="green">144</FONT>            this.connected = true;<a name="line.144"></a>
+<FONT color="green">145</FONT>            return true;<a name="line.145"></a>
 <FONT color="green">146</FONT>        }<a name="line.146"></a>
 <FONT color="green">147</FONT>    <a name="line.147"></a>
 <FONT color="green">148</FONT>    }<a name="line.148"></a>

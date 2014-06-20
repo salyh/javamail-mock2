@@ -32,7 +32,7 @@ The library come in two flavors/modes
 * Normal (or halfmock): Allows also to connect to real IMAP/POP servers. Use this if you have mixed testing setups (mockend an real server). Require a little bit of setup.
 * Fullmock: Use this if you have mocked test only. Normally no setup required.
 
-See unittests on how to use the library.
+See unittests for how to use the library.
 Maven site docu is here: [http://salyh.github.io/javamail-mock2/](http://salyh.github.io/javamail-mock2)
 
 <h3>Usage: Normal (= Halfmock) mode</h3>

@@ -25,11 +25,13 @@
  **********************************************************************************************************************/
 package de.saly.javamail.mock2;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.Semaphore;
+import com.sun.mail.iap.ProtocolException;
+import com.sun.mail.iap.Response;
+import com.sun.mail.imap.AppendUID;
+import com.sun.mail.imap.IMAPFolder;
+import com.sun.mail.imap.ResyncData;
+import com.sun.mail.imap.SortTerm;
+import de.saly.javamail.mock2.MailboxFolder.MailboxEventListener;
 
 import javax.mail.FetchProfile;
 import javax.mail.Flags;
@@ -46,15 +48,11 @@ import javax.mail.event.MailEvent;
 import javax.mail.event.MessageChangedEvent;
 import javax.mail.internet.MimeMessage;
 import javax.mail.search.SearchTerm;
-
-import com.sun.mail.iap.ProtocolException;
-import com.sun.mail.iap.Response;
-import com.sun.mail.imap.AppendUID;
-import com.sun.mail.imap.IMAPFolder;
-import com.sun.mail.imap.ResyncData;
-import com.sun.mail.imap.SortTerm;
-
-import de.saly.javamail.mock2.MailboxFolder.MailboxEventListener;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.Semaphore;
 
 public class IMAPMockFolder extends IMAPFolder implements MailboxEventListener {
 
@@ -396,7 +394,8 @@ public class IMAPMockFolder extends IMAPFolder implements MailboxEventListener {
         abortIdle();
         checkExists();
         checkOpened();
-        return new MockMessage(mailboxFolder.getById(uid), this);
+        Message message = mailboxFolder.getById(uid);
+        return message != null ? new MockMessage(message, this) : null;
     }
 
     @Override

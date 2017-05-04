@@ -25,8 +25,14 @@
  **********************************************************************************************************************/
 package de.saly.javamail.mock2.test;
 
-import java.util.Arrays;
-import java.util.Properties;
+import com.sun.mail.imap.IMAPFolder;
+import com.sun.mail.imap.IMAPStore;
+import de.saly.javamail.mock2.MailboxFolder;
+import de.saly.javamail.mock2.MockMailbox;
+import de.saly.javamail.mock2.Providers;
+import de.saly.javamail.mock2.test.support.MockTestException;
+import org.junit.Assert;
+import org.junit.Test;
 
 import javax.mail.Flags.Flag;
 import javax.mail.Folder;
@@ -40,17 +46,8 @@ import javax.mail.event.MessageCountEvent;
 import javax.mail.event.MessageCountListener;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
-
-import org.junit.Assert;
-import org.junit.Test;
-
-import com.sun.mail.imap.IMAPFolder;
-import com.sun.mail.imap.IMAPStore;
-
-import de.saly.javamail.mock2.MailboxFolder;
-import de.saly.javamail.mock2.MockMailbox;
-import de.saly.javamail.mock2.Providers;
-import de.saly.javamail.mock2.test.support.MockTestException;
+import java.util.Arrays;
+import java.util.Properties;
 
 public class IMAPTestCase extends AbstractTestCase {
 
@@ -460,6 +457,16 @@ public class IMAPTestCase extends AbstractTestCase {
         Assert.assertEquals(1, level2.getMessageCount());
 
         Assert.assertEquals(2, root.list().length);
+    }
+
+    @Test
+    public void testGetMessageByUnknownUID() throws Exception {
+        final Store store = session.getStore("mock_imap");
+        store.connect("hendrik@unknown.com", null);
+        final Folder inbox = store.getFolder("INBOX");
+        inbox.open(Folder.READ_WRITE);
+        final IMAPFolder imapInbox = (IMAPFolder) inbox;
+        Assert.assertNull(imapInbox.getMessageByUID(666));
     }
 
 }

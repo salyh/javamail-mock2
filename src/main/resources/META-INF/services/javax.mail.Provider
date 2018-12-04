@@ -1,0 +1,6 @@
+de.saly.javamail.mock2.provider.IMAPMockProvider
+de.saly.javamail.mock2.provider.IMAPSSLMockProvider
+de.saly.javamail.mock2.provider.SMTPMockProvider
+de.saly.javamail.mock2.provider.SMTPSSLMockProvider
+de.saly.javamail.mock2.provider.POP3MockProvider
+de.saly.javamail.mock2.provider.POP3SSLMockProvider

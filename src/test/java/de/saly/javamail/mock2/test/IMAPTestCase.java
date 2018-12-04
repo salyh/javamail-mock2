@@ -4,7 +4,7 @@
  * =======================================================================
  *
  * Copyright (C) 2014 by Hendrik Saly (http://saly.de)
- * 
+ *
  * Based on ideas from Kohsuke Kawaguchi's Mock-javamail (https://java.net/projects/mock-javamail)
  *
  ***********************************************************************************************************************
@@ -121,7 +121,7 @@ public class IMAPTestCase extends AbstractTestCase {
     protected Properties getProperties() {
 
         final Properties props = super.getProperties();
-        props.setProperty("mail.store.protocol", "mock_imaps");
+        props.setProperty("mail.store.protocol", isFull() ? "imaps" : "mock_imaps");
         return props;
     }
 

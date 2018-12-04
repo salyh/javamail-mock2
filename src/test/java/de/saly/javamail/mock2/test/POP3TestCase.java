@@ -4,7 +4,7 @@
  * =======================================================================
  *
  * Copyright (C) 2014 by Hendrik Saly (http://saly.de)
- * 
+ *
  * Based on ideas from Kohsuke Kawaguchi's Mock-javamail (https://java.net/projects/mock-javamail)
  *
  ***********************************************************************************************************************
@@ -53,7 +53,7 @@ public class POP3TestCase extends AbstractTestCase {
     protected Properties getProperties() {
 
         final Properties props = super.getProperties();
-        props.setProperty("mail.store.protocol", "mock_pop3s");
+        props.setProperty("mail.store.protocol", isFull() ? "pop3s" : "mock_pop3s");
         return props;
     }
 

@@ -61,7 +61,7 @@
 			<name>Nexus Release Repository</name>
 			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 		</repository>
-	
+
 		<!--<repository>
 			<id>bintray-salyh-maven-javamail-mock2</id>
 			<name>salyh-maven-javamail-mock2</name>
@@ -124,6 +124,10 @@
 					<includes>
 						<include>**/*Test*.java</include>
 					</includes>
+					<useSystemClassLoader>false</useSystemClassLoader>
+					<systemPropertyVariables>
+						<javamail.mock.full>true</javamail.mock.full>
+					</systemPropertyVariables>
 				</configuration>
 			</plugin>
 
@@ -203,7 +207,7 @@
 		<dependency>
 			<groupId>com.sun.mail</groupId>
 			<artifactId>javax.mail</artifactId>
-			<version>1.5.2</version>
+			<version>1.6.2</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>activation</artifactId>

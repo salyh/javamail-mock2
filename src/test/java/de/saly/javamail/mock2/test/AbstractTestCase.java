@@ -4,7 +4,7 @@
  * =======================================================================
  *
  * Copyright (C) 2014 by Hendrik Saly (http://saly.de)
- * 
+ *
  * Based on ideas from Kohsuke Kawaguchi's Mock-javamail (https://java.net/projects/mock-javamail)
  *
  ***********************************************************************************************************************
@@ -70,6 +70,10 @@ public abstract class AbstractTestCase {
         System.out.println("--------------------- TEARDOWN " + name.getMethodName() + " -------------------------------------");
         session = null;
 
+    }
+
+    protected boolean isFull() {
+        return System.getProperty("javamail.mock.full", "false").equals("true");
     }
 
 }

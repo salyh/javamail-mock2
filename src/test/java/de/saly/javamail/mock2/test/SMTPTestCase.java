@@ -4,7 +4,7 @@
  * =======================================================================
  *
  * Copyright (C) 2014 by Hendrik Saly (http://saly.de)
- * 
+ *
  * Based on ideas from Kohsuke Kawaguchi's Mock-javamail (https://java.net/projects/mock-javamail)
  *
  ***********************************************************************************************************************
@@ -53,7 +53,9 @@ public class SMTPTestCase extends AbstractTestCase {
     protected Properties getProperties() {
 
         final Properties props = super.getProperties();
-        props.setProperty("mail.transport.protocol.rfc822", "mock_smtp");
+        if (!isFull()) {
+            props.setProperty("mail.transport.protocol.rfc822", "mock_smtp");
+        }
         return props;
     }
 
